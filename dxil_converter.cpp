@@ -4971,13 +4971,18 @@ bool Converter::Impl::emit_stage_output_variables()
 		if (effective_element_type != actual_element_type && component_type_is_16bit(actual_element_type))
 			builder.addDecoration(variable_id, spv::DecorationRelaxedPrecision);
 
+		unsigned geometry_stream = 0;
+		if (execution_model == spv::ExecutionModelGeometry)
+			geometry_stream = get_geometry_shader_stream_index(output);
+
 		if (execution_model == spv::ExecutionModelVertex || execution_model == spv::ExecutionModelGeometry ||
 		    execution_model == spv::ExecutionModelTessellationEvaluation)
 		{
 			if (resource_mapping_iface)
 			{
 				VulkanStreamOutput vk_output = {};
-				if (!resource_mapping_iface->remap_stream_output({ semantic_name.c_str(), semantic_index }, vk_output))
+				if (!resource_mapping_iface->remap_stream_output(
+				        { semantic_name.c_str(), semantic_index, geometry_stream }, vk_output))
 					return false;
 
 				if (vk_output.enable)
@@ -4991,15 +4996,10 @@ bool Converter::Impl::emit_stage_output_variables()
 			}
 		}
 
-		unsigned geometry_stream = 0;
-		if (execution_model == spv::ExecutionModelGeometry)
+		if (geometry_stream != 0)
 		{
-			geometry_stream = get_geometry_shader_stream_index(output);
-			if (geometry_stream != 0)
-			{
-				builder.addCapability(spv::CapabilityGeometryStreams);
-				builder.addDecoration(variable_id, spv::DecorationStream, geometry_stream);
-			}
+			builder.addCapability(spv::CapabilityGeometryStreams);
+			builder.addDecoration(variable_id, spv::DecorationStream, geometry_stream);
 		}
 
 		if (system_value == DXIL::Semantic::Target)

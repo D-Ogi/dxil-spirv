@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 #define DXIL_SPV_API_VERSION_MAJOR 2
-#define DXIL_SPV_API_VERSION_MINOR 74
+#define DXIL_SPV_API_VERSION_MINOR 75
 #define DXIL_SPV_API_VERSION_PATCH 0
 
 #define DXIL_SPV_DESCRIPTOR_QA_INTERFACE_VERSION 2
@@ -114,6 +114,8 @@ typedef struct dxil_spv_d3d_stream_output
 {
 	const char *semantic;
 	unsigned semantic_index;
+	/* Geometry stream of the output, 0 outside geometry shaders. */
+	unsigned stream;
 } dxil_spv_d3d_stream_output;
 
 typedef struct dxil_spv_vulkan_stream_output

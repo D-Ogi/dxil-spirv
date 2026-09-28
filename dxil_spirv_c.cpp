@@ -239,7 +239,7 @@ struct Remapper : ResourceRemappingInterface
 
 	bool remap_stream_output(const D3DStreamOutput &d3d_output, VulkanStreamOutput &vk_output) override
 	{
-		dxil_spv_d3d_stream_output c_output = { d3d_output.semantic, d3d_output.semantic_index };
+		dxil_spv_d3d_stream_output c_output = { d3d_output.semantic, d3d_output.semantic_index, d3d_output.stream };
 		dxil_spv_vulkan_stream_output c_vk_output = {};
 
 		if (output_remapper)

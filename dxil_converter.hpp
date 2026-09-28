@@ -192,6 +192,7 @@ struct D3DStreamOutput
 {
 	const char *semantic;
 	unsigned semantic_index;
+	unsigned stream;
 };
 
 struct VulkanStreamOutput
