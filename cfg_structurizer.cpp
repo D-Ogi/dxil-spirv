@@ -8470,6 +8470,7 @@ bool CFGStructurizer::rewrite_invalid_loop_breaks()
 	CFGNode *rewrite_header = nullptr;
 	CFGNode *invalid_target = nullptr;
 	CFGNode *invalid_merge = nullptr;
+	CFGNode *unresolved_ladder_header = nullptr;
 
 	// Process from inside out.
 	for (auto *node : forward_post_visit_order)
@@ -8483,6 +8484,20 @@ bool CFGStructurizer::rewrite_invalid_loop_breaks()
 		if (node->merge == MergeType::Loop && node->freeze_structured_analysis)
 		{
 			auto *merge = node->loop_merge_block;
+
+			// A selection which is promoted to a loop in pass 0 keeps its selection merge as a ladder
+			// until split_merge_blocks() resolves the loop merge. If an outer loop resolves its own ladder first,
+			// the new ladder block inherits our merge target and is never split again.
+			// We can then end up with a merge block we don't dominate, which may even be the outer loop's merge.
+			// Fall back to the ladder, which is the natural merge block of the construct.
+			// Any branch to the old merge target is now a break which is resolved like any other.
+			auto *ladder = node->loop_ladder_block;
+			if (merge && ladder && !node->dominates(merge) && node->dominates(ladder))
+			{
+				unresolved_ladder_header = node;
+				break;
+			}
+
 			if (!merge || merge->post_dominates(node))
 				continue;
 
@@ -8559,6 +8574,14 @@ bool CFGStructurizer::rewrite_invalid_loop_breaks()
 				break;
 			}
 		}
+	}
+
+	if (unresolved_ladder_header)
+	{
+		unresolved_ladder_header->loop_merge_block = unresolved_ladder_header->loop_ladder_block;
+		unresolved_ladder_header->loop_ladder_block = nullptr;
+		recompute_cfg();
+		return true;
 	}
 
 	if (invalid_merge)
