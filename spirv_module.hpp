@@ -92,7 +92,10 @@ enum class HelperCall
 	SDiv,
 	SRem,
 	DenormPreserveLegacyF32toF16,
-	DenormPreserveLegacyF16toF32
+	DenormPreserveLegacyF16toF32,
+	PackHalfPrecise,
+	UnpackHalfPrecise,
+	FPExtPrecise,
 };
 
 enum class BDAOperation

@@ -1149,6 +1149,17 @@ void Converter::Impl::emit_non_semantic_signal_quirk(ShaderQuirk quirk)
 	b.addExternal(std::move(inst));
 }
 
+void Converter::Impl::emit_non_semantic_all_resources_bound()
+{
+	auto &b = spirv_module.get_builder();
+	b.addExtension("SPV_KHR_non_semantic_info");
+	spv::Id ext = b.import("NonSemantic.dxil-spirv.all_resources_bound");
+	auto inst = std::make_unique<spv::Instruction>(b.getUniqueId(), b.makeVoidType(), spv::OpExtInst);
+	inst->addIdOperand(ext);
+	inst->addImmediateOperand(1);
+	b.addExternal(std::move(inst));
+}
+
 void Converter::Impl::emit_non_semantic_debug_info(const NonSemanticDebugInfo &info)
 {
 	auto &b = spirv_module.get_builder();
@@ -1749,7 +1760,7 @@ bool Converter::Impl::get_uav_image_format(DXIL::ResourceKind resource_kind,
 					break;
 
 				case DXIL::ComponentType::F32:
-					format = spv::ImageFormatR32f;
+					format = access_meta.has_nvapi_atomic_fp16bit ? spv::ImageFormatRg16f : spv::ImageFormatR32f;
 					break;
 
 				case DXIL::ComponentType::U64:
@@ -1866,30 +1877,6 @@ bool Converter::Impl::emit_uavs(const llvm::MDNode *uavs, const llvm::MDNode *re
 				actual_component_type = DXIL::ComponentType::U64;
 			}
 			effective_component_type = get_effective_typed_resource_type(actual_component_type);
-
-			if (access_meta.has_nvapi_atomic_fp16bit &&
-				(resource_kind == DXIL::ResourceKind::Texture1D ||
-				 resource_kind == DXIL::ResourceKind::Texture2D ||
-				 resource_kind == DXIL::ResourceKind::Texture3D))
-			{
-				// From shaders/nvapi/nvHLSLExtns.h:
-				// .. perform atomic operation on a R16G16_FLOAT UAV at the given address
-				// .. Behaviour of these set of functions is undefined if the UAV is not of R16G16_FLOAT format
-				// Note: there are also NvInterlocked variations (e.g. NvInterlockedAddFp16x4) that operate on
-				// a R16G16B16A16_FLOAT UAV, but the address is multiplied by 2, so it still fits R16G16_FLOAT.
-				format = spv::ImageFormatRg16f;
-			}
-
-			if (access_meta.has_nvapi_atomic_fp32bit &&
-				(resource_kind == DXIL::ResourceKind::Texture1D ||
-				 resource_kind == DXIL::ResourceKind::Texture2D ||
-				 resource_kind == DXIL::ResourceKind::Texture3D))
-			{
-				// From shaders/nvapi/nvHLSLExtns.h:
-				// .. perform atomic add on a R32_FLOAT UAV at the given address
-				// .. Behaviour of these set of functions is undefined if the UAV is not of R32_FLOAT format
-				format = spv::ImageFormatR32f;
-			}
 		}
 		else
 		{
@@ -7693,6 +7680,7 @@ bool Converter::Impl::analyze_execution_modes_meta()
 
 	auto flags = get_shader_flags(meta);
 	execution_mode_meta.native_16bit_operations = (flags & DXIL::ShaderFlagNativeLowPrecision) != 0;
+	execution_mode_meta.all_resources_bound = (flags & DXIL::ShaderFlagAllResourcesBound) != 0;
 	return true;
 }
 
@@ -9113,8 +9101,13 @@ ConvertedFunction Converter::Impl::convert_entry_point()
 		return result;
 
 	if (options.extended_non_semantic_info)
+	{
 		for (auto &info : non_semantic_debug_info)
 			emit_non_semantic_debug_info(info);
+
+		if (execution_mode_meta.all_resources_bound)
+			emit_non_semantic_all_resources_bound();
+	}
 
 	if (options.quirks.non_semantic_signal_concurrent_workgroup)
 		emit_non_semantic_signal_quirk(ShaderQuirk::NonSemanticSignalConcurrentWorkgroup);
@@ -9882,6 +9875,13 @@ void Converter::Impl::set_option(const OptionBase &cap)
 	{
 		auto &c = static_cast<const OptionShaderAbort &>(cap);
 		options.instruction_instrumentation.shader_abort = c.enabled;
+		break;
+	}
+
+	case Option::ConservativeSSBOVectorization:
+	{
+		auto &c = static_cast<const OptionConservativeSSBOVectorization &>(cap);
+		options.conservative_ssbo_vectorization = c.enabled;
 		break;
 	}
 

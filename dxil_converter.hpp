@@ -278,6 +278,7 @@ enum class Option : uint32_t
 	OpacityMicromap = 53,
 	FloatControls2 = 54,
 	ShaderAbort = 55,
+	ConservativeSSBOVectorization = 56,
 	Count
 };
 
@@ -934,6 +935,16 @@ struct OptionShaderAbort : OptionBase
 {
 	OptionShaderAbort()
 		: OptionBase(Option::ShaderAbort)
+	{
+	}
+
+	bool enabled = false;
+};
+
+struct OptionConservativeSSBOVectorization : OptionBase
+{
+	OptionConservativeSSBOVectorization()
+		: OptionBase(Option::ConservativeSSBOVectorization)
 	{
 	}
 

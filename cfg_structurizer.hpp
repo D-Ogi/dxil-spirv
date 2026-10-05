@@ -86,6 +86,7 @@ private:
 	bool query_reachability(const CFGNode &from, const CFGNode &to) const;
 	bool structurize(unsigned pass);
 	bool find_loops(unsigned pass);
+	bool merges_to_outer_real_loop(const CFGNode *node) const;
 	bool rewrite_complex_loop_exits(CFGNode *node, CFGNode *merge, Vector<CFGNode *> &dominated_exits);
 	bool rewrite_transposed_loops();
 	static uint32_t earliest_dominance_frontier_post_visit_order(const CFGNode *node);
@@ -245,8 +246,11 @@ private:
 
 	UnorderedMap<uint32_t, CFGNode *> value_id_to_block;
 
+#ifdef DXIL_SPIRV_DEBUG_DUMPING
 	void log_cfg(const char *tag) const;
 	void log_cfg_graphviz(const char *path) const;
+	void log_cfg_structurize_test(const char *path) const;
+#endif
 
 	bool can_complete_phi_insertion(const PHI &phi, const CFGNode *end_node);
 	CFGNode *find_linear_phi_control_flow_frontier(
