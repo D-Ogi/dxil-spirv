@@ -32,6 +32,12 @@
 #include <string>
 #include <unordered_map>
 
+#ifdef _MSC_VER
+/* MSVC has no POSIX strtok_r. Its own strtok_s takes the same three arguments
+ * and keeps the state in the caller's context pointer, so it is a drop-in. */
+#define strtok_r strtok_s
+#endif
+
 #include "logging.hpp"
 #include "spirv-tools/libspirv.hpp"
 #include "spirv_cross_c.h"
