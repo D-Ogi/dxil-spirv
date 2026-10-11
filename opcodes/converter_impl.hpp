@@ -879,6 +879,7 @@ struct Converter::Impl
 			// If this is not set, it's implied we always the ViewID and layer offset from a constant.
 			// If the shader exports Layer offset, this is ignored,
 			// and we must fall back to draw level instancing.
+			uint32_t draw_loop_base_spec_id = UINT32_MAX;
 			uint32_t view_index_to_view_instance_spec_id = UINT32_MAX;
 
 			// If not UINT32_MAX, implies view instancing needs to apply a non-zero offset to output ViewportIndex.
@@ -888,6 +889,7 @@ struct Converter::Impl
 
 	struct
 	{
+		spv::Id draw_loop_spec_ids[5] = {};
 		spv::Id view_index_to_view_instance_id = 0;
 		spv::Id view_instance_to_viewport_id = 0;
 		bool custom_layer_index = false;

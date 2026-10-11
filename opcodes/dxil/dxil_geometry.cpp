@@ -143,10 +143,42 @@ static bool emit_view_instance_ubo(Converter::Impl &impl)
 	return true;
 }
 
+static spv::Id build_draw_loop_constant(Converter::Impl &impl, unsigned field)
+{
+	auto &builder = impl.builder();
+	auto &id = impl.multiview.draw_loop_spec_ids[field];
+	if (!id)
+	{
+		id = builder.makeUintConstant(field == 3 ? 2048 : field == 4 ? 16 : 0, true);
+		builder.addDecoration(id, spv::DecorationSpecId, impl.options.multiview.draw_loop_base_spec_id + field);
+	}
+	return id;
+}
+
+// D3D12 adds shader and PSO indices as u32, then selects zero out of range.
+spv::Id clamp_view_instance_location(Converter::Impl &impl, spv::Id index, bool layer)
+{
+	if (impl.options.multiview.draw_loop_base_spec_id == UINT32_MAX)
+		return index;
+	auto &builder = impl.builder();
+	auto *valid = impl.allocate(spv::OpULessThan, builder.makeBoolType());
+	valid->add_id(index);
+	valid->add_id(build_draw_loop_constant(impl, layer ? 3 : 4));
+	impl.add(valid);
+	auto *select = impl.allocate(spv::OpSelect, builder.makeUintType(32));
+	select->add_id(valid->id);
+	select->add_id(index);
+	select->add_id(builder.makeUintConstant(0));
+	impl.add(select);
+	return select->id;
+}
+
 spv::Id build_layer_offset_id(Converter::Impl &impl)
 {
 	if (!impl.options.multiview.enable)
 		return 0;
+	if (impl.options.multiview.draw_loop_base_spec_id != UINT32_MAX)
+		return build_draw_loop_constant(impl, 1);
 
 	auto &mapping = impl.options.meta_descriptor_mappings[int(MetaDescriptor::DynamicViewInstancingOffsets)];
 	if (mapping.kind == MetaDescriptorKind::Invalid)
@@ -229,17 +261,19 @@ static bool emit_view_instancing_fixed_layer(Converter::Impl &impl, bool entry_p
 {
 	if (!impl.options.multiview.enable || impl.multiview.custom_layer_index ||
 	    !impl.options.multiview.last_pre_rasterization_stage ||
-	    impl.options.multiview.view_index_to_view_instance_spec_id != UINT32_MAX ||
+	    (impl.options.multiview.draw_loop_base_spec_id == UINT32_MAX &&
+	     impl.options.multiview.view_index_to_view_instance_spec_id != UINT32_MAX) ||
 	    !should_emit_view_instancing_fixed_layer_viewport(impl, entry_point))
 		return true;
 
 	auto &mapping = impl.options.meta_descriptor_mappings[int(MetaDescriptor::DynamicViewInstancingOffsets)];
-	if (mapping.kind == MetaDescriptorKind::Invalid)
+	if (mapping.kind == MetaDescriptorKind::Invalid && impl.options.multiview.draw_loop_base_spec_id == UINT32_MAX)
 		return true;
 
 	spv::Id layer_offset_id = build_layer_offset_id(impl);
 	if (!layer_offset_id)
 		return false;
+	layer_offset_id = clamp_view_instance_location(impl, layer_offset_id, true);
 
 	spv::Id layer_id = impl.spirv_module.get_builtin_shader_output(spv::BuiltInLayer);
 	auto &builder = impl.builder();
@@ -275,6 +309,8 @@ static bool emit_view_instancing_fixed_layer(Converter::Impl &impl, bool entry_p
 
 spv::Id build_viewport_offset_id(Converter::Impl &impl)
 {
+	if (impl.options.multiview.draw_loop_base_spec_id != UINT32_MAX)
+		return build_draw_loop_constant(impl, 2);
 	auto &builder = impl.builder();
 
 	if (impl.options.multiview.view_instance_to_viewport_spec_id == UINT32_MAX)
@@ -312,13 +348,14 @@ static bool emit_view_instancing_fixed_viewport(Converter::Impl &impl, bool entr
 {
 	if (!impl.options.multiview.enable || impl.multiview.custom_viewport_index ||
 	    !impl.options.multiview.last_pre_rasterization_stage ||
-	    impl.options.multiview.view_instance_to_viewport_spec_id == UINT32_MAX ||
+	    (impl.options.multiview.draw_loop_base_spec_id == UINT32_MAX &&
+	     impl.options.multiview.view_instance_to_viewport_spec_id == UINT32_MAX) ||
 	    !should_emit_view_instancing_fixed_layer_viewport(impl, entry_point))
 		return true;
 
 	auto &builder = impl.builder();
 
-	spv::Id viewport_id = build_viewport_offset_id(impl);
+	spv::Id viewport_id = clamp_view_instance_location(impl, build_viewport_offset_id(impl), false);
 	spv::Id vp_id = impl.spirv_module.get_builtin_shader_output(spv::BuiltInViewportIndex);
 
 	if (!vp_id)
@@ -434,6 +471,8 @@ bool emit_view_masking(Converter::Impl &impl)
 
 spv::Id build_view_instance_id(Converter::Impl &impl)
 {
+	if (impl.options.multiview.draw_loop_base_spec_id != UINT32_MAX)
+		return build_draw_loop_constant(impl, 0);
 	auto &builder = impl.builder();
 
 	if (!impl.multiview.custom_layer_index &&

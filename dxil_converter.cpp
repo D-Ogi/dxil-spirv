@@ -4904,6 +4904,13 @@ bool Converter::Impl::emit_stage_output_variables()
 			system_value = DXIL::Semantic::User;
 		}
 
+		// Location offsets travel as ordinary varyings until the rasterizer.
+		// Vulkan does not permit Layer/ViewportIndex inputs on GS/HS/DS.
+		if (options.multiview.enable && !options.multiview.last_pre_rasterization_stage &&
+		    (system_value == DXIL::Semantic::RenderTargetArrayIndex ||
+		     system_value == DXIL::Semantic::ViewPortArrayIndex))
+			system_value = DXIL::Semantic::User;
+
 		if (system_value == DXIL::Semantic::Position)
 		{
 			type_id = get_type_id(effective_element_type, rows, 4);
@@ -5685,6 +5692,10 @@ bool Converter::Impl::emit_stage_input_variables()
 		// For HS <-> DS, ignore system values.
 		// Allow certain system values that are synthesized however.
 		if (execution_model == spv::ExecutionModelTessellationEvaluation && system_value != DXIL::Semantic::DomainLocation)
+			system_value = DXIL::Semantic::User;
+		if (options.multiview.enable && stage_arrayed_inputs &&
+		    (system_value == DXIL::Semantic::RenderTargetArrayIndex ||
+		     system_value == DXIL::Semantic::ViewPortArrayIndex))
 			system_value = DXIL::Semantic::User;
 
 		bool masked_input = false;
@@ -9831,6 +9842,10 @@ void Converter::Impl::set_option(const OptionBase &cap)
 		options.extended_non_semantic_info = sem.enabled;
 		break;
 	}
+
+	case Option::ViewInstancingDrawLoop:
+		options.multiview.draw_loop_base_spec_id = static_cast<const OptionViewInstancingDrawLoop &>(cap).base_spec_id;
+		break;
 
 	case Option::ViewInstancing:
 	{

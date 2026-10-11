@@ -303,17 +303,18 @@ bool emit_store_primitive_output_instruction(Converter::Impl &impl, const llvm::
 			add->add_id(build_layer_offset_id(impl));
 			impl.add(add);
 
-			store_value = add->id;
+			store_value = clamp_view_instance_location(impl, add->id, true);
 		}
 		else if (meta.semantic == DXIL::Semantic::ViewPortArrayIndex &&
-		         impl.options.multiview.view_instance_to_viewport_spec_id != UINT32_MAX)
+		         (impl.options.multiview.draw_loop_base_spec_id != UINT32_MAX ||
+		          impl.options.multiview.view_instance_to_viewport_spec_id != UINT32_MAX))
 		{
 			auto *add = impl.allocate(spv::OpIAdd, builder.makeUintType(32));
 			add->add_id(store_value);
 			add->add_id(build_viewport_offset_id(impl));
 			impl.add(add);
 
-			store_value = add->id;
+			store_value = clamp_view_instance_location(impl, add->id, false);
 		}
 	}
 

@@ -1450,6 +1450,15 @@ dxil_spv_result dxil_spv_converter_add_option(dxil_spv_converter converter, cons
 		break;
 	}
 
+	case DXIL_SPV_OPTION_VIEW_INSTANCING_DRAW_LOOP:
+	{
+		OptionViewInstancingDrawLoop helper;
+		auto *inst = reinterpret_cast<const dxil_spv_option_view_instancing_draw_loop *>(option);
+		helper.base_spec_id = inst->base_spec_id;
+		converter->options.emplace_back(duplicate(helper));
+		break;
+	}
+
 	case DXIL_SPV_OPTION_VIEW_INSTANCING:
 	{
 		OptionViewInstancing helper;

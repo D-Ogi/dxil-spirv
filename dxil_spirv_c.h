@@ -502,6 +502,7 @@ typedef enum dxil_spv_option
 	DXIL_SPV_OPTION_FLOAT_CONTROLS_2 = 54,
 	DXIL_SPV_OPTION_SHADER_ABORT = 55,
 	DXIL_SPV_OPTION_CONSERVATIVE_SSBO_VECTORIZATION = 56,
+	DXIL_SPV_OPTION_VIEW_INSTANCING_DRAW_LOOP = 57,
 	DXIL_SPV_OPTION_INT_MAX = 0x7fffffff
 } dxil_spv_option;
 
@@ -865,6 +866,14 @@ typedef struct dxil_spv_option_extended_non_semantic
 } dxil_spv_option_extended_non_semantic;
 
 #ifdef DXIL_SPV_ENABLE_EXPERIMENTAL_MULTIVIEW
+/* Five consecutive u32 specialization IDs: ViewID, layer, viewport, layer count,
+ * viewport count. No Vulkan multiview or user descriptor binding is consumed. */
+typedef struct dxil_spv_option_view_instancing_draw_loop
+{
+    dxil_spv_option_base base;
+    unsigned base_spec_id;
+} dxil_spv_option_view_instancing_draw_loop;
+
 typedef struct dxil_spv_option_view_instancing
 {
 	dxil_spv_option_base base;

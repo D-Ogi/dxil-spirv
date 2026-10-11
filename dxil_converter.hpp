@@ -279,6 +279,7 @@ enum class Option : uint32_t
 	FloatControls2 = 54,
 	ShaderAbort = 55,
 	ConservativeSSBOVectorization = 56,
+	ViewInstancingDrawLoop = 57,
 	Count
 };
 
@@ -868,6 +869,13 @@ struct OptionExtendedNonSemantic : OptionBase
 	}
 
 	bool enabled = false;
+};
+
+// Separate option preserves the existing ViewInstancing option ABI.
+struct OptionViewInstancingDrawLoop : OptionBase
+{
+    OptionViewInstancingDrawLoop() : OptionBase(Option::ViewInstancingDrawLoop) {}
+    uint32_t base_spec_id = UINT32_MAX;
 };
 
 struct OptionViewInstancing : OptionBase
