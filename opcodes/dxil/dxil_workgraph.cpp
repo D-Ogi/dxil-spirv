@@ -335,6 +335,7 @@ bool emit_increment_output_count(Converter::Impl &impl, const llvm::CallInst *in
 	call_op->add_id(atomic_addr);
 	call_op->add_id(node_index);
 	call_op->add_id(alloc_count);
+	call_op->add_id(emit_load_node_input_push_parameter(impl, NodePayloadOutputOffset, builder.makeUintType(32)));
 	impl.add(call_op);
 
 	return true;
