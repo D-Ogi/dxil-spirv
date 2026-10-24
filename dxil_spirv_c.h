@@ -418,6 +418,8 @@ typedef struct dxil_spv_node_input_data
 	dxil_spv_bool dispatch_grid_is_upper_bound; /* [NodeMaxDispatchGrid] if true. */
 	dxil_spv_bool node_track_rw_input_sharing; /* Payload is tagged with [NodeTrackRWInputSharing]. */
 	dxil_spv_bool is_program_entry; /* [NodeIsProgramEntry] */
+	/* amdgpu-wddm fork: the application record size, without the internal word of payload_stride. */
+	unsigned record_size;
 } dxil_spv_node_input_data;
 
 typedef struct dxil_spv_node_output_data

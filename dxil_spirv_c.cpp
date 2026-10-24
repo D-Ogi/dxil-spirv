@@ -648,6 +648,7 @@ dxil_spv_result dxil_spv_parsed_blob_get_entry_point_node_input(
 	data->is_static_broadcast_node_spec_id = input.is_static_broadcast_node_spec_id;
 	data->node_track_rw_input_sharing = input.node_track_rw_input_sharing ? DXIL_SPV_TRUE : DXIL_SPV_FALSE;
 	data->is_program_entry = input.is_program_entry ? DXIL_SPV_TRUE : DXIL_SPV_FALSE;
+	data->record_size = input.record_size;
 
 	return DXIL_SPV_SUCCESS;
 }

@@ -979,6 +979,8 @@ struct NodeInputData
 {
 	String node_id;
 	uint32_t payload_stride;
+	// amdgpu-wddm fork: the record size of the application, without the internal sharing word of payload_stride.
+	uint32_t record_size;
 	DXIL::NodeLaunchType launch_type;
 	uint32_t node_array_index;
 	NodeDispatchGrid grid_buffer;

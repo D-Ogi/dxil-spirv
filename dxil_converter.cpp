@@ -6485,6 +6485,32 @@ NodeDispatchGrid Converter::Impl::node_parse_dispatch_grid(llvm::MDNode *node_me
 	return {};
 }
 
+// amdgpu-wddm fork: the record size from the DXIL metadata, 0 for an empty record. It does not include the
+// word that node_parse_payload_stride() adds for [NodeTrackRWInputSharing].
+uint32_t Converter::Impl::node_parse_record_size(llvm::MDNode *node_meta)
+{
+	bool is_rw_sharing;
+	uint32_t payload_stride = node_parse_payload_stride(node_meta, is_rw_sharing);
+	uint32_t num_ops = node_meta->getNumOperands();
+
+	if (!payload_stride || !is_rw_sharing)
+		return payload_stride;
+
+	for (uint32_t i = 0; i < num_ops; i += 2)
+	{
+		auto tag = DXIL::NodeMetadataTag(get_constant_metadata(node_meta, i));
+		if (tag == DXIL::NodeMetadataTag::NodeRecordType)
+		{
+			auto *node_record_type = llvm::cast<llvm::MDNode>(node_meta->getOperand(i + 1));
+			for (uint32_t j = 0; j < node_record_type->getNumOperands(); j += 2)
+				if (get_constant_metadata(node_record_type, j) == 0)
+					return get_constant_metadata(node_record_type, j + 1);
+		}
+	}
+
+	return 0;
+}
+
 uint32_t Converter::Impl::node_parse_payload_stride(llvm::MDNode *node_meta, bool &is_rw_sharing)
 {
 	uint32_t num_ops = node_meta->getNumOperands();
@@ -6775,6 +6801,7 @@ NodeInputData Converter::Impl::get_node_input(llvm::MDNode *meta)
 
 		node.grid_buffer = node_parse_dispatch_grid(input);
 		node.payload_stride = node_parse_payload_stride(input, node.node_track_rw_input_sharing);
+		node.record_size = node_parse_record_size(input);
 
 		for (uint32_t i = 0; i < num_ops; i += 2)
 		{

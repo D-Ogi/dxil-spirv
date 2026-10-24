@@ -291,6 +291,7 @@ struct Converter::Impl
 
 	static NodeDispatchGrid node_parse_dispatch_grid(llvm::MDNode *node_meta);
 	static uint32_t node_parse_payload_stride(llvm::MDNode *node_meta, bool &is_rw_sharing);
+	static uint32_t node_parse_record_size(llvm::MDNode *node_meta);
 	bool emit_execution_modes_node_input();
 	bool emit_execution_modes_node_output(llvm::MDNode *input);
 	bool emit_execution_modes_geometry();
