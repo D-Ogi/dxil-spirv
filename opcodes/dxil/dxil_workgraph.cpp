@@ -29,6 +29,8 @@
 #include "spirv_module.hpp"
 #include "node.hpp"
 
+#include <algorithm>
+
 namespace dxil_spv
 {
 uint32_t get_node_io_from_annotate_handle(const llvm::CallInst *inst)
@@ -119,8 +121,27 @@ static spv::Id emit_build_output_payload_offset(
     Converter::Impl &impl, const llvm::Value *base_offset, const llvm::Value *index, uint32_t stride)
 {
 	auto &builder = impl.builder();
+
+	// The record index is clamped to the most records of one allocation (the limit of build_allocate_node_records), so
+	// that a write with an index at or past the count of the allocation, which the application must not do, stays in
+	// the payload memory and its sink (VKD3D_WORKGRAPH_PAYLOAD_SINK_SIZE of vkd3d-proton). A valid index is below the
+	// count and does not change.
+	uint32_t limit = std::min<uint32_t>((64 * 1024 - 15) / std::max<uint32_t>(stride, 1), 256);
+	limit = std::max<uint32_t>(limit, 1);
+	spv::Id index_id = impl.get_id_for_value(index);
+	auto *in_range_op = impl.allocate(spv::OpULessThan, builder.makeBoolType());
+	in_range_op->add_id(index_id);
+	in_range_op->add_id(builder.makeUintConstant(limit));
+	impl.add(in_range_op);
+
+	auto *clamp_op = impl.allocate(spv::OpSelect, builder.makeUintType(32));
+	clamp_op->add_id(in_range_op->id);
+	clamp_op->add_id(index_id);
+	clamp_op->add_id(builder.makeUintConstant(limit - 1));
+	impl.add(clamp_op);
+
 	auto *mul_op = impl.allocate(spv::OpIMul, builder.makeUintType(32));
-	mul_op->add_id(impl.get_id_for_value(index));
+	mul_op->add_id(clamp_op->id);
 	mul_op->add_id(builder.makeUintConstant(stride));
 	impl.add(mul_op);
 

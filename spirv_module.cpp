@@ -81,6 +81,8 @@ struct SPIRVModule::Impl : BlockEmissionInterface
 	spv::Id build_finish_cross_group_sharing(SPIRVModule &module);
 	spv::Id build_allocate_node_records(SPIRVModule &module, bool per_thread);
 	spv::Id build_increment_node_count(SPIRVModule &module, bool per_thread);
+	void emit_bounded_reservation(spv::Function *func, spv::Block *&block, spv::Id ptr, spv::Id size, spv::Id room,
+	                              spv::Id enter, spv::Id &fits, spv::Id &old);
 	spv::Id build_allocate_node_records_waterfall(SPIRVModule &module);
 	spv::Id build_node_coalesce_payload_offset(SPIRVModule &module, const spv::Id *ids, uint32_t id_count);
 	spv::Id build_fp8_to_fp16(SPIRVModule &module, const spv::Id *ids, uint32_t id_count, bool coopmat);
@@ -1546,6 +1548,104 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records_waterfall(SPIRVModule &mo
 	return func->getId();
 }
 
+// Reserves size units of the counter at ptr only if the counter stays at or below room + size (the capacity). This is a
+// compare/exchange loop, so the counter never goes past the capacity and cannot wrap, whatever the number of
+// reservations at the same time and however old the first read is. A failed exchange returns a counter that another
+// reservation made larger by at least the smallest size of a reservation, so one invocation does at most
+// capacity / (smallest size) + 1 iterations. If enter is false, there is no reservation. The code starts in block, and
+// block is the block after the loop on return. fits is true if the reservation was made, and old is then the counter
+// before it.
+void SPIRVModule::Impl::emit_bounded_reservation(spv::Function *func, spv::Block *&block, spv::Id ptr, spv::Id size,
+                                                 spv::Id room, spv::Id enter, spv::Id &fits, spv::Id &old)
+{
+	spv::Id bool_type = builder.makeBoolType();
+	spv::Id uint_type = builder.makeUintType(32);
+	spv::Id scope_id = builder.getAtomicDeviceScopeId();
+	spv::Id relaxed_id = builder.makeUintConstant(0); // There is no implied sync.
+
+	auto *loop_entry = new spv::Block(builder.getUniqueId(), *func);
+	auto *header = new spv::Block(builder.getUniqueId(), *func);
+	auto *exchange = new spv::Block(builder.getUniqueId(), *func);
+	auto *continue_block = new spv::Block(builder.getUniqueId(), *func);
+	auto *loop_merge = new spv::Block(builder.getUniqueId(), *func);
+	auto *after = new spv::Block(builder.getUniqueId(), *func);
+
+	auto emit = [&](spv::Block *bb, spv::Op op, spv::Id type, std::initializer_list<spv::Id> ids) {
+		auto inst = std::make_unique<spv::Instruction>(builder.getUniqueId(), type, op);
+		for (spv::Id id : ids)
+			inst->addIdOperand(id);
+		spv::Id result = inst->getResultId();
+		add_instruction(bb, std::move(inst));
+		return result;
+	};
+
+	builder.setBuildPoint(block);
+	builder.createSelectionMerge(after, 0);
+	builder.createConditionalBranch(enter, loop_entry, after);
+
+	spv::Id first_id = emit(loop_entry, spv::OpAtomicLoad, uint_type, { ptr, scope_id, relaxed_id });
+	builder.setBuildPoint(loop_entry);
+	builder.createBranch(header);
+
+	auto exchange_op = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpAtomicCompareExchange);
+	spv::Id seen_id = exchange_op->getResultId();
+
+	auto current_phi = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpPhi);
+	spv::Id current_id = current_phi->getResultId();
+	current_phi->addIdOperand(first_id);
+	current_phi->addIdOperand(loop_entry->getId());
+	current_phi->addIdOperand(seen_id);
+	current_phi->addIdOperand(continue_block->getId());
+	add_instruction(header, std::move(current_phi));
+	spv::Id room_left_id = emit(header, spv::OpULessThanEqual, bool_type, { current_id, room });
+	builder.setBuildPoint(header);
+	builder.createLoopMerge(loop_merge, continue_block, 0);
+	builder.createConditionalBranch(room_left_id, exchange, loop_merge);
+
+	spv::Id new_id = emit(exchange, spv::OpIAdd, uint_type, { current_id, size });
+	exchange_op->addIdOperand(ptr);
+	exchange_op->addIdOperand(scope_id);
+	exchange_op->addIdOperand(relaxed_id);
+	exchange_op->addIdOperand(relaxed_id);
+	exchange_op->addIdOperand(new_id);
+	exchange_op->addIdOperand(current_id);
+	add_instruction(exchange, std::move(exchange_op));
+	spv::Id done_id = emit(exchange, spv::OpIEqual, bool_type, { seen_id, current_id });
+	builder.setBuildPoint(exchange);
+	builder.createConditionalBranch(done_id, loop_merge, continue_block);
+
+	builder.setBuildPoint(continue_block);
+	builder.createBranch(header);
+
+	auto loop_fits_phi = std::make_unique<spv::Instruction>(builder.getUniqueId(), bool_type, spv::OpPhi);
+	spv::Id loop_fits_id = loop_fits_phi->getResultId();
+	loop_fits_phi->addIdOperand(builder.makeBoolConstant(false));
+	loop_fits_phi->addIdOperand(header->getId());
+	loop_fits_phi->addIdOperand(builder.makeBoolConstant(true));
+	loop_fits_phi->addIdOperand(exchange->getId());
+	add_instruction(loop_merge, std::move(loop_fits_phi));
+	builder.setBuildPoint(loop_merge);
+	builder.createBranch(after);
+
+	auto fits_phi = std::make_unique<spv::Instruction>(builder.getUniqueId(), bool_type, spv::OpPhi);
+	fits = fits_phi->getResultId();
+	fits_phi->addIdOperand(builder.makeBoolConstant(false));
+	fits_phi->addIdOperand(block->getId());
+	fits_phi->addIdOperand(loop_fits_id);
+	fits_phi->addIdOperand(loop_merge->getId());
+	add_instruction(after, std::move(fits_phi));
+
+	auto old_phi = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpPhi);
+	old = old_phi->getResultId();
+	old_phi->addIdOperand(builder.makeUintConstant(0));
+	old_phi->addIdOperand(block->getId());
+	old_phi->addIdOperand(current_id);
+	old_phi->addIdOperand(loop_merge->getId());
+	add_instruction(after, std::move(old_phi));
+
+	block = after;
+}
+
 spv::Id SPIRVModule::Impl::build_increment_node_count(SPIRVModule &, bool per_thread)
 {
 	auto &call_id = per_thread ? increment_thread_node_count_call_id : increment_group_node_count_call_id;
@@ -1604,8 +1704,10 @@ spv::Id SPIRVModule::Impl::build_increment_node_count(SPIRVModule &, bool per_th
 	// not fit is not counted, its records are added to the 64-bit count in words 4 and 5, it gets the payload offset
 	// of the sink after the payload capacity, and its packed offset goes to words 6 and 7. Empty records count 4 bytes
 	// against the payload capacity, so that the records of a level never take more unrolled offsets than there are.
-	// The payload counter is read before it is incremented, and only an allocation that saw room adds its size, so
-	// the counter stays below the capacity plus one allocation (at most 64 KiB) per wave that runs at the same time.
+	// The payload is reserved with a compare/exchange loop (emit_bounded_reservation), so the payload counter never goes
+	// past the capacity. An empty count has no limit of its own (WorkGraphs.md, Node output limits: empty records do not
+	// count against MaxRecords), so only a count that does not fit is dropped. This runs per invocation for
+	// ThreadIncrementOutputCount, and the dropped count is exact.
 	spv::Block *join_block;
 	{
 		spv::Id uint_ptr_type = builder.makePointer(spv::StorageClassPhysicalStorageBuffer, uint_type);
@@ -1633,25 +1735,23 @@ spv::Id SPIRVModule::Impl::build_increment_node_count(SPIRVModule &, bool per_th
 
 		spv::Id payload_total_ptr = emit(spv::OpInBoundsAccessChain, uint_ptr_type,
 		                                 { atomics_id, builder.makeUintConstant(0) });
-		// A valid count is at most 256 (the output limit of a thread group). A count above 16384 (64 KiB of offsets)
-		// is dropped, so that one increment adds at most 64 KiB to the payload counter.
-		spv::Id fits_id = emit(spv::OpLogicalAnd, bool_type,
-		                       { emit(spv::OpULessThanEqual, bool_type, { total_count_id, builder.makeUintConstant(16384) }),
-		                         emit(spv::OpULessThanEqual, bool_type,
-		                              { total_count_id,
-		                                emit(spv::OpShiftRightLogical, uint_type, { capacity_id, builder.makeUintConstant(2) }) }) });
+		// The count is compared with capacity / 4 before count * 4 is computed, so that the size cannot wrap.
+		spv::Id count_ok_id = emit(spv::OpULessThanEqual, bool_type,
+		                           { total_count_id,
+		                             emit(spv::OpShiftRightLogical, uint_type, { capacity_id, builder.makeUintConstant(2) }) });
 		spv::Id size_id = emit(spv::OpSelect, uint_type,
-		                       { fits_id, emit(spv::OpShiftLeftLogical, uint_type, { total_count_id, builder.makeUintConstant(2) }),
+		                       { count_ok_id, emit(spv::OpShiftLeftLogical, uint_type, { total_count_id, builder.makeUintConstant(2) }),
 		                         builder.makeUintConstant(0) });
 		spv::Id room_id = emit(spv::OpISub, uint_type, { capacity_id, size_id });
-		spv::Id current_id = emit(spv::OpAtomicLoad, uint_type, { payload_total_ptr, scope_id, relaxed_id });
-		fits_id = emit(spv::OpLogicalAnd, bool_type,
-		               { fits_id, emit(spv::OpULessThanEqual, bool_type, { current_id, room_id }) });
-		spv::Id old_id = emit(spv::OpAtomicIAdd, uint_type,
-		                      { payload_total_ptr, scope_id, relaxed_id,
-		                        emit(spv::OpSelect, uint_type, { fits_id, size_id, builder.makeUintConstant(0) }) });
-		fits_id = emit(spv::OpLogicalAnd, bool_type,
-		               { fits_id, emit(spv::OpULessThanEqual, bool_type, { old_id, room_id }) });
+		spv::Id nonzero_id = emit(spv::OpINotEqual, bool_type, { size_id, builder.makeUintConstant(0) });
+		spv::Id reserved_id, old_id;
+		emit_bounded_reservation(func, body, payload_total_ptr, size_id, room_id,
+		                         emit(spv::OpLogicalAnd, bool_type, { count_ok_id, nonzero_id }), reserved_id, old_id);
+		(void)old_id;
+		// A count of 0 fits without a reservation.
+		spv::Id fits_id = emit(spv::OpLogicalAnd, bool_type,
+		                       { count_ok_id, emit(spv::OpLogicalOr, bool_type,
+		                                           { reserved_id, emit(spv::OpLogicalNot, bool_type, { nonzero_id }) }) });
 		emit(spv::OpAtomicIAdd, uint_type,
 		     { counter(func->getParamId(1)), scope_id, relaxed_id,
 		       emit(spv::OpSelect, uint_type, { fits_id, total_count_id, builder.makeUintConstant(0) }) });
@@ -1741,10 +1841,12 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 	spv::Id total_count_id;
 	spv::Id phi_undefined_id = 0;
 
-	// The most records of one allocation: the records of an allocation that does not fit go to the sink after the
-	// payload capacity, 64 KiB (VKD3D_WORKGRAPH_PAYLOAD_SINK_SIZE of vkd3d-proton), and the size is rounded up to 16
-	// bytes. A valid allocation is at most 32 KB (the output limit of a thread group). A larger count is dropped
-	// before its size is computed, so that count * stride cannot wrap.
+	// The most records of one allocation: at most 256 records (the record count of an entry of the packed offsets has 8
+	// bits), and at most 64 KiB - 15 bytes, so that the records of an allocation that does not fit stay in the first
+	// 64 KiB of the sink after the payload capacity (VKD3D_WORKGRAPH_PAYLOAD_SINK_SIZE of vkd3d-proton). A valid
+	// allocation is at most 256 records and 32 KB (WorkGraphs.md, Node output limits). A larger count is dropped before
+	// its size is computed, so that count * stride cannot wrap. The record addressing clamps the record index to the
+	// same limit (emit_build_output_payload_offset).
 	auto emit_entry = [&](spv::Op op, spv::Id type, std::initializer_list<spv::Id> ids) {
 		auto inst = std::make_unique<spv::Instruction>(builder.getUniqueId(), type, op);
 		for (spv::Id id : ids)
@@ -1759,7 +1861,12 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 	                                emit_entry(spv::OpSelect, uint_type,
 	                                           { emit_entry(spv::OpIEqual, bool_type, { stride_id, builder.makeUintConstant(0) }),
 	                                             builder.makeUintConstant(1), stride_id }) });
+	limit_id = emit_entry(spv::OpSelect, uint_type,
+	                      { emit_entry(spv::OpULessThan, bool_type, { limit_id, builder.makeUintConstant(256) }),
+	                        limit_id, builder.makeUintConstant(256) });
 	spv::Id lane_count_id = func->getParamId(2);
+	// True if the dropped count of this allocation is a lower bound (a lane count above the limit counts as limit + 1).
+	spv::Id clamped_id = builder.makeBoolConstant(false);
 
 	if (per_thread)
 	{
@@ -1769,6 +1876,10 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		builder.addCapability(spv::CapabilityGroupNonUniformArithmetic);
 
 		// A lane count above the limit is limit + 1, so that the sum of a wave cannot wrap and is above the limit.
+		builder.addCapability(spv::CapabilityGroupNonUniformVote);
+		clamped_id = emit_entry(spv::OpGroupNonUniformAny, bool_type,
+		                        { builder.makeUintConstant(spv::ScopeSubgroup),
+		                          emit_entry(spv::OpULessThan, bool_type, { limit_id, lane_count_id }) });
 		lane_count_id = emit_entry(spv::OpSelect, uint_type,
 		                           { emit_entry(spv::OpULessThanEqual, bool_type, { lane_count_id, limit_id }),
 		                             lane_count_id, emit_entry(spv::OpIAdd, uint_type, { limit_id, builder.makeUintConstant(1) }) });
@@ -1855,12 +1966,17 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		};
 
 		// Compute required payload bytes to allocate, and align. A count above the limit gives size 0 and is dropped.
+		// An allocation takes at least 16 bytes, also with a stride of 0, so that the number of allocations that fit
+		// is at most capacity / 16 (this bounds the packed offset counter and the reservation loop).
 		spv::Id count_ok_id = emit(spv::OpULessThanEqual, bool_type, { total_count_id, limit_id });
 		spv::Id size_id = emit(spv::OpIMul, uint_type,
 		                       { emit(spv::OpSelect, uint_type, { count_ok_id, total_count_id, builder.makeUintConstant(0) }),
 		                         func->getParamId(3) });
 		size_id = emit(spv::OpIAdd, uint_type, { size_id, builder.makeUintConstant(15) });
 		size_id = emit(spv::OpBitwiseAnd, uint_type, { size_id, builder.makeUintConstant(~15u) });
+		size_id = emit(spv::OpSelect, uint_type,
+		               { emit(spv::OpIEqual, bool_type, { size_id, builder.makeUintConstant(0) }),
+		                 builder.makeUintConstant(16), size_id });
 
 		spv::Id uint_array_type = builder.makeRuntimeArray(uint_type);
 		builder.addDecoration(uint_array_type, spv::DecorationArrayStride, 4);
@@ -1898,27 +2014,22 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		// that end where the packed offsets start, so word w is perNodeTotal[AllocationOffset - 8 + w].
 		// Word 0 is the payload capacity in bytes and word 1 the packed offset capacity in entries. An allocation that does
 		// not fit is not counted, its records are added to the 64-bit count in words 4 and 5, it gets the payload
-		// offset of the sink after the payload capacity, and its packed offset goes to words 6 and 7. The payload
-		// counter is read before it is incremented, and only an allocation that saw room adds its size, so the counter
-		// stays below the capacity plus one allocation (at most 64 KiB) per wave that runs at the same time.
+		// offset of the sink after the payload capacity, and its packed offset goes to words 6 and 7. Bit 0 of word 2
+		// is set if a dropped count is a lower bound. The payload is reserved with a compare/exchange loop
+		// (emit_bounded_reservation), so the payload counter never goes past the capacity. The packed offset counter is
+		// incremented only by an allocation that has its payload, so it stays at or below capacity / 16 and cannot wrap.
 		spv::Id guard_id = emit(spv::OpISub, uint_type, { func->getParamId(4), builder.makeUintConstant(8) });
 		spv::Id capacity_id = load_word(counter(guard_id));
 		spv::Id fused_capacity_id =
 		    load_word(counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(1) })));
 
-		// The payload. A first plain read keeps the counter near the capacity when many allocations do not fit, so
-		// that it cannot wrap.
+		// The payload.
 		spv::Id room_id = emit(spv::OpISub, uint_type, { capacity_id, size_id });
-		spv::Id fits_id = emit(spv::OpLogicalAnd, bool_type,
-		                       { count_ok_id, emit(spv::OpULessThanEqual, bool_type, { size_id, capacity_id }) });
-		spv::Id current_id = emit(spv::OpAtomicLoad, uint_type, { payload_total_ptr, scope_id, relaxed_id });
-		fits_id = emit(spv::OpLogicalAnd, bool_type,
-		               { fits_id, emit(spv::OpULessThanEqual, bool_type, { current_id, room_id }) });
-		spv::Id old_id = emit(spv::OpAtomicIAdd, uint_type,
-		                      { payload_total_ptr, scope_id, relaxed_id,
-		                        emit(spv::OpSelect, uint_type, { fits_id, size_id, builder.makeUintConstant(0) }) });
-		fits_id = emit(spv::OpLogicalAnd, bool_type,
-		               { fits_id, emit(spv::OpULessThanEqual, bool_type, { old_id, room_id }) });
+		spv::Id fits_id, old_id;
+		emit_bounded_reservation(func, body_block, payload_total_ptr, size_id, room_id,
+		                         emit(spv::OpLogicalAnd, bool_type,
+		                              { count_ok_id, emit(spv::OpULessThanEqual, bool_type, { size_id, capacity_id }) }),
+		                         fits_id, old_id);
 
 		// The packed offset entry.
 		spv::Id fused_id = emit(spv::OpAtomicIAdd, uint_type,
@@ -1962,6 +2073,7 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		wave_fits_id = emit(spv::OpSelect, uint_type, { fits_id, builder.makeUintConstant(1), builder.makeUintConstant(0) });
 		spv::Id dropped_ptr = counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(4) }));
 		spv::Id dropped_hi_ptr = counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(5) }));
+		spv::Id flags_ptr = counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(2) }));
 
 		auto *drop_block = new spv::Block(builder.getUniqueId(), *func);
 		auto *join_block = new spv::Block(builder.getUniqueId(), *func);
@@ -1984,6 +2096,13 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		                             { emit_drop(spv::OpULessThan, bool_type, { drop_sum_id, drop_old_id }),
 		                               builder.makeUintConstant(1), builder.makeUintConstant(0) });
 		emit_drop(spv::OpAtomicIAdd, uint_type, { dropped_hi_ptr, scope_id, relaxed_id, carry_id });
+		if (per_thread)
+		{
+			emit_drop(spv::OpAtomicOr, uint_type,
+			          { flags_ptr, scope_id, relaxed_id,
+			            emit_drop(spv::OpSelect, uint_type,
+			                      { clamped_id, builder.makeUintConstant(1), builder.makeUintConstant(0) }) });
+		}
 		builder.setBuildPoint(drop_block);
 		builder.createBranch(join_block);
 
