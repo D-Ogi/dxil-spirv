@@ -7281,20 +7281,7 @@ bool Converter::Impl::emit_execution_modes_ray_query()
 		builder.addCapability(spv::CapabilityRayQueryKHR);
 		builder.addCapability(spv::CapabilityRayTraversalPrimitiveCullingKHR);
 
-		auto &module = bitcode_parser.get_module();
-		uint32_t sm_major = 0, sm_minor = 0;
-		get_shader_model(module, nullptr, &sm_major, &sm_minor);
-
-		// Intended to match NV workaround behavior for legacy content.
-		// In older SMs, there was no way to flag that OMMs were going to be used,
-		// so have to be conservative. This is only relevant for NVAPI OMM.
-		bool is_legacy = sm_major * 100 + sm_minor < 609;
-
-		bool omm_possible =
-				(is_legacy && options.ray_query_force_omm_execution_mode_in_legacy_sm) ||
-				shader_analysis.ray_query.requires_opacity_micromap_tracing;
-
-		if (omm_possible)
+		if (ray_query_opacity_micromap_enabled())
 		{
 			// No need to declare the execution mode if it's not used.
 			emit_opacity_micromap_extension(*this);
@@ -7310,6 +7297,45 @@ bool Converter::Impl::emit_execution_modes_ray_query()
 	}
 
 	return true;
+}
+
+bool Converter::Impl::ray_query_opacity_micromap_enabled()
+{
+	// Without device support no acceleration structure contains an opacity micromap,
+	// so SPV_KHR_opacity_micromap is neither needed nor available.
+	if (!options.opacity_micromap_supported)
+		return false;
+
+	auto &module = bitcode_parser.get_module();
+	uint32_t sm_major = 0, sm_minor = 0;
+	get_shader_model(module, nullptr, &sm_major, &sm_minor);
+
+	// Intended to match NV workaround behavior for legacy content.
+	// In older SMs, there was no way to flag that OMMs were going to be used,
+	// so have to be conservative. This is only relevant for NVAPI OMM.
+	bool is_legacy = sm_major * 100 + sm_minor < 609;
+
+	return (is_legacy && options.ray_query_force_omm_execution_mode_in_legacy_sm) ||
+	       shader_analysis.ray_query.requires_opacity_micromap_tracing;
+}
+
+spv::Id Converter::Impl::build_ray_flags_without_unsupported_omm(const llvm::Value *flags, bool omm_enabled)
+{
+	// A constant ForceOpacityMicromap2State flag needs RayTracingOpacityMicromapKHR. When opacity micromaps
+	// are not enabled, the flag has no effect, because no acceleration structure that the ray can hit has
+	// an opacity micromap. Remove it from constant flags, so the module stays valid without the capability.
+	// Dynamic flags are valid SPIR-V and stay as they are.
+	if (!omm_enabled)
+	{
+		if (const auto *const_flags = llvm::dyn_cast<llvm::ConstantInt>(flags))
+		{
+			uint32_t value = uint32_t(const_flags->getUniqueInteger().getZExtValue());
+			if ((value & spv::RayFlagsForceOpacityMicromap2StateKHRMask) != 0)
+				return builder().makeUintConstant(value & ~uint32_t(spv::RayFlagsForceOpacityMicromap2StateKHRMask));
+		}
+	}
+
+	return get_id_for_value(flags);
 }
 
 bool Converter::Impl::emit_execution_modes_ray_tracing()
@@ -9625,6 +9651,7 @@ void Converter::Impl::set_option(const OptionBase &cap)
 		break;
 
 	case Option::OpacityMicromap:
+		options.opacity_micromap_supported = true;
 		options.opacity_micromap_enabled =
 		    static_cast<const OptionOpacityMicromap &>(cap).trace_ray_enabled;
 		options.ray_query_force_omm_execution_mode_in_legacy_sm =
