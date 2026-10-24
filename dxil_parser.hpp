@@ -62,6 +62,8 @@ public:
 	bool parse_container(const void *data, size_t size, bool reflection);
 	Vector<uint8_t> &get_blob();
 	Vector<RDATSubobject> &get_rdat_subobjects();
+	// The mangled names of the RDAT function table, in table order (the export order of a library).
+	Vector<String> &get_rdat_function_names();
 	bool is_dxbc_binary() const { return dxbc_binary; }
 
 private:
@@ -69,6 +71,7 @@ private:
 	Vector<DXIL::IOElement> input_elements;
 	Vector<DXIL::IOElement> output_elements;
 	Vector<RDATSubobject> rdat_subobjects;
+	Vector<String> rdat_function_names;
 
 	bool dxbc_binary = false;
 

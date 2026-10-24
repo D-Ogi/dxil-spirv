@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 #define DXIL_SPV_API_VERSION_MAJOR 2
-#define DXIL_SPV_API_VERSION_MINOR 75
+#define DXIL_SPV_API_VERSION_MINOR 76
 #define DXIL_SPV_API_VERSION_PATCH 0
 
 #define DXIL_SPV_DESCRIPTOR_QA_INTERFACE_VERSION 2
@@ -962,6 +962,12 @@ DXIL_SPV_PUBLIC_API dxil_spv_result dxil_spv_parsed_blob_get_entry_point_demangl
                                                                                         const char **demangled_entry);
 
 #ifdef DXIL_SPV_ENABLE_EXPERIMENTAL_WORKGRAPHS
+/* The position of the entry point in the RDAT function table of a library, which is the export order.
+ * DXIL_SPV_ERROR_NO_DATA if the blob has no such table or the entry point is not in it.
+ * The entry point indices themselves follow the dx.entryPoints metadata, which DXC sorts by name. */
+DXIL_SPV_PUBLIC_API dxil_spv_result dxil_spv_parsed_blob_get_entry_point_export_index(dxil_spv_parsed_blob blob,
+                                                                                      unsigned index,
+                                                                                      unsigned *export_index);
 DXIL_SPV_PUBLIC_API dxil_spv_result dxil_spv_parsed_blob_get_entry_point_node_input(
 	dxil_spv_parsed_blob blob, unsigned index, dxil_spv_node_input_data *data);
 

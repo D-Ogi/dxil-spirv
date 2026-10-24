@@ -68,6 +68,11 @@ Vector<uint8_t> &DXILContainerParser::get_blob()
 	return dxil_blob;
 }
 
+Vector<String> &DXILContainerParser::get_rdat_function_names()
+{
+	return rdat_function_names;
+}
+
 Vector<RDATSubobject> &DXILContainerParser::get_rdat_subobjects()
 {
 	return rdat_subobjects;
@@ -202,6 +207,39 @@ bool DXILContainerParser::parse_rdat(MemoryStream &stream)
 		case DXIL::RuntimeDataPartType::RawBytes:
 		{
 			raw_bytes = substream.create_substream(substream.get_offset(), subpart_length);
+			break;
+		}
+
+		case DXIL::RuntimeDataPartType::FunctionTable:
+		{
+			// Each record starts with the offset of the mangled name in the string buffer. The order of the
+			// records is the export order of the library. A table that cannot be read gives no names; it does
+			// not make the container invalid.
+			uint32_t record_count;
+			uint32_t record_stride;
+			if (subpart_length < 2 * sizeof(uint32_t) ||
+			    !substream.read(record_count) || !substream.read(record_stride) ||
+			    record_stride < sizeof(uint32_t) ||
+			    uint64_t(record_count) * record_stride > subpart_length - 2 * sizeof(uint32_t))
+				break;
+
+			Vector<String> names;
+			for (unsigned record = 0; record < record_count; record++)
+			{
+				auto record_stream =
+						substream.create_substream(substream.get_offset() + record * record_stride, record_stride);
+
+				uint32_t name_offset;
+				const char *str = nullptr;
+				if (!record_stream.read(name_offset) || !string_buffer.map_string_absolute(str, name_offset))
+				{
+					names.clear();
+					break;
+				}
+				names.push_back(str);
+			}
+
+			rdat_function_names = std::move(names);
 			break;
 		}
 

@@ -53,6 +53,7 @@ struct dxil_spv_parsed_blob_s
 #endif
 	Vector<uint8_t> dxil_blob;
 	Vector<RDATSubobject> rdat_subobjects;
+	Vector<String> rdat_function_names;
 
 	struct EntryPoint
 	{
@@ -439,6 +440,7 @@ dxil_spv_result dxil_spv_parse_dxil_blob(const void *data, size_t size, dxil_spv
 
 	parsed->dxil_blob = std::move(parser.get_blob());
 	parsed->rdat_subobjects = std::move(parser.get_rdat_subobjects());
+	parsed->rdat_function_names = std::move(parser.get_rdat_function_names());
 
 	bool success;
 
@@ -604,6 +606,26 @@ dxil_spv_result dxil_spv_parsed_blob_get_entry_point_name(dxil_spv_parsed_blob b
 		return DXIL_SPV_ERROR_INVALID_ARGUMENT;
 	*mangled_entry = blob->entry_points[index].mangled.c_str();
 	return DXIL_SPV_SUCCESS;
+}
+
+dxil_spv_result dxil_spv_parsed_blob_get_entry_point_export_index(dxil_spv_parsed_blob blob,
+                                                                  unsigned index,
+                                                                  unsigned *export_index)
+{
+	if (index >= blob->entry_points.size())
+		return DXIL_SPV_ERROR_INVALID_ARGUMENT;
+
+	auto &mangled = blob->entry_points[index].mangled;
+	for (size_t i = 0, n = blob->rdat_function_names.size(); i < n; i++)
+	{
+		if (blob->rdat_function_names[i] == mangled)
+		{
+			*export_index = unsigned(i);
+			return DXIL_SPV_SUCCESS;
+		}
+	}
+
+	return DXIL_SPV_ERROR_NO_DATA;
 }
 
 dxil_spv_result dxil_spv_parsed_blob_get_entry_point_demangled_name(dxil_spv_parsed_blob blob,
