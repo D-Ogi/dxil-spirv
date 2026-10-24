@@ -1601,9 +1601,11 @@ spv::Id SPIRVModule::Impl::build_increment_node_count(SPIRVModule &, bool per_th
 	// The output bounds of the level, written by vkd3d-proton (struct vkd3d_workgraph_output_guard): eight words
 	// that end where the packed offsets start, so word w is perNodeTotal[AllocationOffset - 8 + w].
 	// Word 0 is the payload capacity in bytes and word 1 the packed offset capacity in entries. An allocation that does
-	// not fit is not counted, its records are added to word 4, it gets the payload offset of the sink after the
-	// payload capacity, and its packed offset goes to words 6 and 7. Empty records count 4 bytes against the payload
-	// capacity, so that the records of a level never take more unrolled offsets than there are.
+	// not fit is not counted, its records are added to the 64-bit count in words 4 and 5, it gets the payload offset
+	// of the sink after the payload capacity, and its packed offset goes to words 6 and 7. Empty records count 4 bytes
+	// against the payload capacity, so that the records of a level never take more unrolled offsets than there are.
+	// The payload counter is read before it is incremented, and only an allocation that saw room adds its size, so
+	// the counter stays below the capacity plus one allocation (at most 64 KiB) per wave that runs at the same time.
 	spv::Block *join_block;
 	{
 		spv::Id uint_ptr_type = builder.makePointer(spv::StorageClassPhysicalStorageBuffer, uint_type);
@@ -1631,9 +1633,13 @@ spv::Id SPIRVModule::Impl::build_increment_node_count(SPIRVModule &, bool per_th
 
 		spv::Id payload_total_ptr = emit(spv::OpInBoundsAccessChain, uint_ptr_type,
 		                                 { atomics_id, builder.makeUintConstant(0) });
-		spv::Id fits_id = emit(spv::OpULessThanEqual, bool_type,
-		                       { total_count_id,
-		                         emit(spv::OpShiftRightLogical, uint_type, { capacity_id, builder.makeUintConstant(2) }) });
+		// A valid count is at most 256 (the output limit of a thread group). A count above 16384 (64 KiB of offsets)
+		// is dropped, so that one increment adds at most 64 KiB to the payload counter.
+		spv::Id fits_id = emit(spv::OpLogicalAnd, bool_type,
+		                       { emit(spv::OpULessThanEqual, bool_type, { total_count_id, builder.makeUintConstant(16384) }),
+		                         emit(spv::OpULessThanEqual, bool_type,
+		                              { total_count_id,
+		                                emit(spv::OpShiftRightLogical, uint_type, { capacity_id, builder.makeUintConstant(2) }) }) });
 		spv::Id size_id = emit(spv::OpSelect, uint_type,
 		                       { fits_id, emit(spv::OpShiftLeftLogical, uint_type, { total_count_id, builder.makeUintConstant(2) }),
 		                         builder.makeUintConstant(0) });
@@ -1650,6 +1656,7 @@ spv::Id SPIRVModule::Impl::build_increment_node_count(SPIRVModule &, bool per_th
 		     { counter(func->getParamId(1)), scope_id, relaxed_id,
 		       emit(spv::OpSelect, uint_type, { fits_id, total_count_id, builder.makeUintConstant(0) }) });
 		spv::Id dropped_ptr = counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(4) }));
+		spv::Id dropped_hi_ptr = counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(5) }));
 
 		auto *drop_block = new spv::Block(builder.getUniqueId(), *func);
 		join_block = new spv::Block(builder.getUniqueId(), *func);
@@ -1657,12 +1664,21 @@ spv::Id SPIRVModule::Impl::build_increment_node_count(SPIRVModule &, bool per_th
 		builder.createSelectionMerge(join_block, 0);
 		builder.createConditionalBranch(fits_id, join_block, drop_block);
 
-		auto drop_op = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpAtomicIAdd);
-		drop_op->addIdOperand(dropped_ptr);
-		drop_op->addIdOperand(scope_id);
-		drop_op->addIdOperand(relaxed_id);
-		drop_op->addIdOperand(total_count_id);
-		add_instruction(drop_block, std::move(drop_op));
+		// Words 4 and 5 are a 64-bit count of the dropped records: the carry of the low word goes to the high word.
+		auto emit_drop = [&](spv::Op op, spv::Id type, std::initializer_list<spv::Id> ids) {
+			auto inst = std::make_unique<spv::Instruction>(builder.getUniqueId(), type, op);
+			for (spv::Id id : ids)
+				inst->addIdOperand(id);
+			spv::Id result = inst->getResultId();
+			add_instruction(drop_block, std::move(inst));
+			return result;
+		};
+		spv::Id drop_old_id = emit_drop(spv::OpAtomicIAdd, uint_type, { dropped_ptr, scope_id, relaxed_id, total_count_id });
+		spv::Id drop_sum_id = emit_drop(spv::OpIAdd, uint_type, { drop_old_id, total_count_id });
+		spv::Id carry_id = emit_drop(spv::OpSelect, uint_type,
+		                             { emit_drop(spv::OpULessThan, bool_type, { drop_sum_id, drop_old_id }),
+		                               builder.makeUintConstant(1), builder.makeUintConstant(0) });
+		emit_drop(spv::OpAtomicIAdd, uint_type, { dropped_hi_ptr, scope_id, relaxed_id, carry_id });
 		builder.setBuildPoint(drop_block);
 		builder.createBranch(join_block);
 	}
@@ -1725,6 +1741,26 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 	spv::Id total_count_id;
 	spv::Id phi_undefined_id = 0;
 
+	// The most records of one allocation: the records of an allocation that does not fit go to the sink after the
+	// payload capacity, 64 KiB (VKD3D_WORKGRAPH_PAYLOAD_SINK_SIZE of vkd3d-proton), and the size is rounded up to 16
+	// bytes. A valid allocation is at most 32 KB (the output limit of a thread group). A larger count is dropped
+	// before its size is computed, so that count * stride cannot wrap.
+	auto emit_entry = [&](spv::Op op, spv::Id type, std::initializer_list<spv::Id> ids) {
+		auto inst = std::make_unique<spv::Instruction>(builder.getUniqueId(), type, op);
+		for (spv::Id id : ids)
+			inst->addIdOperand(id);
+		spv::Id result = inst->getResultId();
+		add_instruction(entry, std::move(inst));
+		return result;
+	};
+	spv::Id stride_id = func->getParamId(3);
+	spv::Id limit_id = emit_entry(spv::OpUDiv, uint_type,
+	                              { builder.makeUintConstant(64 * 1024 - 15),
+	                                emit_entry(spv::OpSelect, uint_type,
+	                                           { emit_entry(spv::OpIEqual, bool_type, { stride_id, builder.makeUintConstant(0) }),
+	                                             builder.makeUintConstant(1), stride_id }) });
+	spv::Id lane_count_id = func->getParamId(2);
+
 	if (per_thread)
 	{
 		// Do this on a per-wave basis. The node metadata index can be divergent, and we need to consider
@@ -1732,11 +1768,16 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		builder.addCapability(spv::CapabilityGroupNonUniformBallot);
 		builder.addCapability(spv::CapabilityGroupNonUniformArithmetic);
 
+		// A lane count above the limit is limit + 1, so that the sum of a wave cannot wrap and is above the limit.
+		lane_count_id = emit_entry(spv::OpSelect, uint_type,
+		                           { emit_entry(spv::OpULessThanEqual, bool_type, { lane_count_id, limit_id }),
+		                             lane_count_id, emit_entry(spv::OpIAdd, uint_type, { limit_id, builder.makeUintConstant(1) }) });
+
 		auto counts_total =
 		    std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpGroupNonUniformIAdd);
 		counts_total->addIdOperand(builder.makeUintConstant(spv::ScopeSubgroup));
 		counts_total->addImmediateOperand(spv::GroupOperationReduce);
-		counts_total->addIdOperand(func->getParamId(2));
+		counts_total->addIdOperand(lane_count_id);
 
 		total_count_id = counts_total->getResultId();
 		add_instruction(entry, std::move(counts_total));
@@ -1797,6 +1838,7 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 	builder.createConditionalBranch(is_first_lane_id, body_block, merge_block);
 
 	spv::Id payload_offset_id;
+	spv::Id wave_fits_id;
 	spv::Block *body_exit_block;
 	builder.setBuildPoint(body_block);
 	{
@@ -1812,8 +1854,11 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 			return result;
 		};
 
-		// Compute required payload bytes to allocate, and align.
-		spv::Id size_id = emit(spv::OpIMul, uint_type, { total_count_id, func->getParamId(3) });
+		// Compute required payload bytes to allocate, and align. A count above the limit gives size 0 and is dropped.
+		spv::Id count_ok_id = emit(spv::OpULessThanEqual, bool_type, { total_count_id, limit_id });
+		spv::Id size_id = emit(spv::OpIMul, uint_type,
+		                       { emit(spv::OpSelect, uint_type, { count_ok_id, total_count_id, builder.makeUintConstant(0) }),
+		                         func->getParamId(3) });
 		size_id = emit(spv::OpIAdd, uint_type, { size_id, builder.makeUintConstant(15) });
 		size_id = emit(spv::OpBitwiseAnd, uint_type, { size_id, builder.makeUintConstant(~15u) });
 
@@ -1852,9 +1897,10 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		// The output bounds of the level, written by vkd3d-proton (struct vkd3d_workgraph_output_guard): eight words
 		// that end where the packed offsets start, so word w is perNodeTotal[AllocationOffset - 8 + w].
 		// Word 0 is the payload capacity in bytes and word 1 the packed offset capacity in entries. An allocation that does
-		// not fit is not counted, its records are added to word 4, it gets the payload offset of the sink after the
-		// payload capacity, and its packed offset goes to words 6 and 7. Empty records count 4 bytes against the payload
-		// capacity, so that the records of a level never take more unrolled offsets than there are.
+		// not fit is not counted, its records are added to the 64-bit count in words 4 and 5, it gets the payload
+		// offset of the sink after the payload capacity, and its packed offset goes to words 6 and 7. The payload
+		// counter is read before it is incremented, and only an allocation that saw room adds its size, so the counter
+		// stays below the capacity plus one allocation (at most 64 KiB) per wave that runs at the same time.
 		spv::Id guard_id = emit(spv::OpISub, uint_type, { func->getParamId(4), builder.makeUintConstant(8) });
 		spv::Id capacity_id = load_word(counter(guard_id));
 		spv::Id fused_capacity_id =
@@ -1863,7 +1909,8 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		// The payload. A first plain read keeps the counter near the capacity when many allocations do not fit, so
 		// that it cannot wrap.
 		spv::Id room_id = emit(spv::OpISub, uint_type, { capacity_id, size_id });
-		spv::Id fits_id = emit(spv::OpULessThanEqual, bool_type, { size_id, capacity_id });
+		spv::Id fits_id = emit(spv::OpLogicalAnd, bool_type,
+		                       { count_ok_id, emit(spv::OpULessThanEqual, bool_type, { size_id, capacity_id }) });
 		spv::Id current_id = emit(spv::OpAtomicLoad, uint_type, { payload_total_ptr, scope_id, relaxed_id });
 		fits_id = emit(spv::OpLogicalAnd, bool_type,
 		               { fits_id, emit(spv::OpULessThanEqual, bool_type, { current_id, room_id }) });
@@ -1912,7 +1959,9 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		add_instruction(body_block, std::move(store_offset));
 
 		payload_offset_id = emit(spv::OpSelect, uint_type, { fits_id, old_id, capacity_id });
+		wave_fits_id = emit(spv::OpSelect, uint_type, { fits_id, builder.makeUintConstant(1), builder.makeUintConstant(0) });
 		spv::Id dropped_ptr = counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(4) }));
+		spv::Id dropped_hi_ptr = counter(emit(spv::OpIAdd, uint_type, { guard_id, builder.makeUintConstant(5) }));
 
 		auto *drop_block = new spv::Block(builder.getUniqueId(), *func);
 		auto *join_block = new spv::Block(builder.getUniqueId(), *func);
@@ -1920,12 +1969,21 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		builder.createSelectionMerge(join_block, 0);
 		builder.createConditionalBranch(fits_id, join_block, drop_block);
 
-		auto drop_op = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpAtomicIAdd);
-		drop_op->addIdOperand(dropped_ptr);
-		drop_op->addIdOperand(scope_id);
-		drop_op->addIdOperand(relaxed_id);
-		drop_op->addIdOperand(total_count_id);
-		add_instruction(drop_block, std::move(drop_op));
+		// Words 4 and 5 are a 64-bit count of the dropped records: the carry of the low word goes to the high word.
+		auto emit_drop = [&](spv::Op op, spv::Id type, std::initializer_list<spv::Id> ids) {
+			auto inst = std::make_unique<spv::Instruction>(builder.getUniqueId(), type, op);
+			for (spv::Id id : ids)
+				inst->addIdOperand(id);
+			spv::Id result = inst->getResultId();
+			add_instruction(drop_block, std::move(inst));
+			return result;
+		};
+		spv::Id drop_old_id = emit_drop(spv::OpAtomicIAdd, uint_type, { dropped_ptr, scope_id, relaxed_id, total_count_id });
+		spv::Id drop_sum_id = emit_drop(spv::OpIAdd, uint_type, { drop_old_id, total_count_id });
+		spv::Id carry_id = emit_drop(spv::OpSelect, uint_type,
+		                             { emit_drop(spv::OpULessThan, bool_type, { drop_sum_id, drop_old_id }),
+		                               builder.makeUintConstant(1), builder.makeUintConstant(0) });
+		emit_drop(spv::OpAtomicIAdd, uint_type, { dropped_hi_ptr, scope_id, relaxed_id, carry_id });
 		builder.setBuildPoint(drop_block);
 		builder.createBranch(join_block);
 
@@ -1962,7 +2020,7 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		    std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpGroupNonUniformIAdd);
 		counts_offsets->addIdOperand(builder.makeUintConstant(spv::ScopeSubgroup));
 		counts_offsets->addImmediateOperand(spv::GroupOperationExclusiveScan);
-		counts_offsets->addIdOperand(func->getParamId(2));
+		counts_offsets->addIdOperand(lane_count_id);
 
 		auto phi_node = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpPhi);
 		phi_node->addIdOperand(payload_offset_id);
@@ -1982,13 +2040,38 @@ spv::Id SPIRVModule::Impl::build_allocate_node_records(SPIRVModule &, bool per_t
 		add_op->addIdOperand(broadcast_op->getResultId());
 		add_op->addIdOperand(mul_op->getResultId());
 
-		return_value = add_op->getResultId();
+		// A dropped wave: every lane writes from the start of the sink.
+		auto fits_phi = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpPhi);
+		fits_phi->addIdOperand(wave_fits_id);
+		fits_phi->addIdOperand(body_exit_block->getId());
+		fits_phi->addIdOperand(phi_undefined_id);
+		fits_phi->addIdOperand(reconverge_block->getId());
+
+		auto fits_broadcast =
+		    std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpGroupNonUniformBroadcastFirst);
+		fits_broadcast->addIdOperand(builder.makeUintConstant(spv::ScopeSubgroup));
+		fits_broadcast->addIdOperand(fits_phi->getResultId());
+
+		auto fits_bool = std::make_unique<spv::Instruction>(builder.getUniqueId(), bool_type, spv::OpINotEqual);
+		fits_bool->addIdOperand(fits_broadcast->getResultId());
+		fits_bool->addIdOperand(builder.makeUintConstant(0));
+
+		auto select_op = std::make_unique<spv::Instruction>(builder.getUniqueId(), uint_type, spv::OpSelect);
+		select_op->addIdOperand(fits_bool->getResultId());
+		select_op->addIdOperand(add_op->getResultId());
+		select_op->addIdOperand(broadcast_op->getResultId());
+
+		return_value = select_op->getResultId();
 
 		add_instruction(merge_block, std::move(phi_node));
+		add_instruction(merge_block, std::move(fits_phi));
 		add_instruction(merge_block, std::move(broadcast_op));
+		add_instruction(merge_block, std::move(fits_broadcast));
 		add_instruction(merge_block, std::move(counts_offsets));
 		add_instruction(merge_block, std::move(mul_op));
 		add_instruction(merge_block, std::move(add_op));
+		add_instruction(merge_block, std::move(fits_bool));
+		add_instruction(merge_block, std::move(select_op));
 	}
 	else
 	{
