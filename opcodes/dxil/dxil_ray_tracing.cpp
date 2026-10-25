@@ -77,7 +77,7 @@ bool emit_trace_ray_instruction(Converter::Impl &impl, const llvm::CallInst *ins
 
 	auto &builder = impl.builder();
 	spv::Id acceleration_structure = impl.get_id_for_value(inst->getOperand(1));
-	spv::Id ray_flags = impl.get_id_for_value(inst->getOperand(2));
+	spv::Id ray_flags = impl.build_ray_flags_without_unsupported_omm(inst->getOperand(2), impl.options.opacity_micromap_enabled);
 	spv::Id instance_inclusion_mask = impl.get_id_for_value(inst->getOperand(3));
 	spv::Id ray_contribution_to_hit_group = impl.get_id_for_value(inst->getOperand(4));
 	spv::Id multiplier_for_geometry = impl.get_id_for_value(inst->getOperand(5));
@@ -458,6 +458,8 @@ bool emit_ray_query_trace_ray_inline_instruction(Converter::Impl &impl, const ll
 	if (auto *const_flags = llvm::dyn_cast<llvm::ConstantInt>(instruction->getOperand(3)))
 	{
 		ray_query_flags |= const_flags->getUniqueInteger().getZExtValue();
+		if (!impl.ray_query_opacity_micromap_enabled())
+			ray_query_flags &= ~uint32_t(spv::RayFlagsForceOpacityMicromap2StateKHRMask);
 		init_op->add_id(builder.makeUintConstant(ray_query_flags));
 	}
 	else if (ray_query_flags == 0)
@@ -691,7 +693,7 @@ bool emit_hit_object_trace_ray_instruction(Converter::Impl &impl, const llvm::Ca
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
 	spv::Id acceleration_structure = impl.get_id_for_value(inst->getOperand(1));
-	spv::Id ray_flags = impl.get_id_for_value(inst->getOperand(2));
+	spv::Id ray_flags = impl.build_ray_flags_without_unsupported_omm(inst->getOperand(2), impl.options.opacity_micromap_enabled);
 	spv::Id instance_inclusion_mask = impl.get_id_for_value(inst->getOperand(3));
 	spv::Id ray_contribution_to_hit_group = impl.get_id_for_value(inst->getOperand(4));
 	spv::Id multiplier_for_geometry = impl.get_id_for_value(inst->getOperand(5));

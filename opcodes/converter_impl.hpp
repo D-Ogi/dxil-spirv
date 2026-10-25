@@ -301,6 +301,8 @@ struct Converter::Impl
 	bool emit_execution_modes_pixel_late();
 	bool emit_execution_modes_ray_tracing();
 	bool emit_execution_modes_ray_query();
+	bool ray_query_opacity_micromap_enabled();
+	spv::Id build_ray_flags_without_unsupported_omm(const llvm::Value *flags, bool omm_enabled);
 	bool emit_execution_modes_amplification();
 	bool emit_execution_modes_mesh();
 	bool emit_execution_modes_fp_denorm_rounding();
@@ -748,6 +750,8 @@ struct Converter::Impl
 		bool bindless_typed_buffer_offsets = false;
 		bool storage_16bit_input_output = false;
 		bool ray_query_force_omm_execution_mode_in_legacy_sm = false;
+		// Set when the OpacityMicromap option is given, that is when the device supports opacity micromaps.
+		bool opacity_micromap_supported = false;
 
 		struct
 		{
