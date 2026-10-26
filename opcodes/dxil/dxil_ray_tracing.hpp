@@ -122,7 +122,8 @@ bool emit_hit_object_set_shader_table_index_instruction(Converter::Impl &impl, c
 bool emit_hit_object_load_local_root_table_constant_instruction(Converter::Impl &impl, const llvm::CallInst *instruction);
 bool emit_hit_object_attributes_instruction(Converter::Impl &impl, const llvm::CallInst *instruction);
 
-bool analyze_phi_hitobject(Converter::Impl &impl, const llvm::PHINode *instruction);
-bool emit_hitobject_phi(Converter::Impl &impl, const llvm::PHINode *instruction);
+void emit_hitobject_reference(Converter::Impl &impl, const llvm::Instruction *instruction);
+bool type_contains_hitobject(const llvm::Type *type);
+void emit_hitobject_alloca(Converter::Impl &impl, const llvm::AllocaInst *instruction);
 } // namespace dxil_spv
 

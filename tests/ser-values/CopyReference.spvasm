@@ -1,0 +1,68 @@
+; Independent reference for the observable CopyLive contract.
+; Two opaque objects encode the two logical values. This intentionally does not
+; use the translator's slot pool or logical-value representation.
+; Runtime needs miss records adding 11 and 23 to the single uint payload.
+OpCapability Shader
+OpCapability ImageBuffer
+OpCapability RayTracingKHR
+OpCapability ShaderInvocationReorderEXT
+OpExtension "SPV_KHR_ray_tracing"
+OpExtension "SPV_EXT_shader_invocation_reorder"
+OpMemoryModel Logical GLSL450
+OpEntryPoint RayGenerationKHR %main "main" %Out %a %b %payload
+OpDecorate %Out DescriptorSet 0
+OpDecorate %Out Binding 0
+OpDecorate %Out NonReadable
+%void = OpTypeVoid
+%fn = OpTypeFunction %void
+%uint = OpTypeInt 32 0
+%float = OpTypeFloat 32
+%v3float = OpTypeVector %float 3
+%v4uint = OpTypeVector %uint 4
+%image = OpTypeImage %uint Buffer 0 0 0 2 R32ui
+%pimage = OpTypePointer UniformConstant %image
+%Out = OpVariable %pimage UniformConstant
+%hit = OpTypeHitObjectEXT
+%phit = OpTypePointer Private %hit
+%a = OpVariable %phit Private
+%b = OpVariable %phit Private
+%Payload = OpTypeStruct %uint
+%ppayload = OpTypePointer RayPayloadKHR %Payload
+%puint = OpTypePointer RayPayloadKHR %uint
+%payload = OpVariable %ppayload RayPayloadKHR
+%u0 = OpConstant %uint 0
+%u1 = OpConstant %uint 1
+%u2 = OpConstant %uint 2
+%u3 = OpConstant %uint 3
+%u100 = OpConstant %uint 100
+%f0 = OpConstant %float 0
+%f1 = OpConstant %float 1
+%fneg1 = OpConstant %float -1
+%f100 = OpConstant %float 100
+%origin = OpConstantComposite %v3float %f0 %f0 %fneg1
+%direction = OpConstantComposite %v3float %f0 %f0 %f1
+%main = OpFunction %void None %fn
+%entry = OpLabel
+OpHitObjectRecordMissEXT %a %u0 %u0 %origin %f0 %direction %f100
+OpHitObjectRecordMissEXT %b %u0 %u0 %origin %f0 %direction %f100
+OpHitObjectSetShaderBindingTableRecordIndexEXT %b %u1
+%p = OpAccessChain %puint %payload %u0
+OpStore %p %u100
+OpHitObjectExecuteShaderEXT %a %payload
+%pa = OpLoad %uint %p
+OpStore %p %u100
+OpHitObjectExecuteShaderEXT %b %payload
+%pb = OpLoad %uint %p
+%ia = OpHitObjectGetShaderBindingTableRecordIndexEXT %uint %a
+%ib = OpHitObjectGetShaderBindingTableRecordIndexEXT %uint %b
+%out = OpLoad %image %Out
+%vpa = OpCompositeConstruct %v4uint %pa %pa %pa %pa
+%vpb = OpCompositeConstruct %v4uint %pb %pb %pb %pb
+%via = OpCompositeConstruct %v4uint %ia %ia %ia %ia
+%vib = OpCompositeConstruct %v4uint %ib %ib %ib %ib
+OpImageWrite %out %u0 %vpa
+OpImageWrite %out %u1 %vpb
+OpImageWrite %out %u2 %via
+OpImageWrite %out %u3 %vib
+OpReturn
+OpFunctionEnd

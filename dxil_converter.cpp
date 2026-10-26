@@ -4371,6 +4371,8 @@ spv::Id Converter::Impl::get_type_id(const llvm::Type *type, TypeLayoutFlags fla
 	case llvm::Type::TypeID::StructTyID:
 	{
 		auto *struct_type = llvm::cast<llvm::StructType>(type);
+		if (struct_type->hasName() && struct_type->getName() == "dx.types.HitObject")
+			return builder.makeVectorType(builder.makeUintType(32), 3);
 		Vector<spv::Id> member_types;
 		member_types.reserve(struct_type->getStructNumElements());
 		for (unsigned i = 0; i < struct_type->getStructNumElements(); i++)
@@ -6263,9 +6265,6 @@ bool Converter::Impl::emit_phi_instruction(CFGNode *block, const llvm::PHINode &
 	if (ags_filter_phi(*this, instruction, override_type))
 		return true;
 
-	if (emit_hitobject_phi(*this, &instruction))
-		return true;
-
 	if (count == 1)
 	{
 		// Degenerate PHI. Seems to happen in some bizarre cases with lcssa passes?
@@ -6385,6 +6384,17 @@ static bool instruction_has_side_effects(const llvm::Instruction &instruction)
 }
 
 bool Converter::Impl::emit_instruction(CFGNode *block, const llvm::Instruction &instruction)
+{
+	if (options.eliminate_dead_code && !instruction_has_side_effects(instruction) &&
+	    llvm_used_ssa_values.count(&instruction) == 0)
+		return true;
+	if (!emit_instruction_inner(block, instruction))
+		return false;
+	emit_hitobject_reference(*this, &instruction);
+	return true;
+}
+
+bool Converter::Impl::emit_instruction_inner(CFGNode *block, const llvm::Instruction &instruction)
 {
 	if (instruction.isTerminator())
 		return true;
@@ -9145,6 +9155,9 @@ ConvertedFunction Converter::Impl::convert_entry_point()
 		gather_function_dependencies(func, callees);
 	if (execution_mode_meta.patch_constant_function)
 		gather_function_dependencies(execution_mode_meta.patch_constant_function, callees);
+	for (auto *callee : callees)
+		for (auto &bb : *callee)
+			hit_object.blocks.push_back(&bb);
 
 	// Analyze all leaf functions.
 	for (auto *leaf_func : callees)

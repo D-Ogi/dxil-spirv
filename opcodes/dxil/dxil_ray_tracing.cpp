@@ -665,24 +665,232 @@ bool emit_ray_query_candidate_procedural_primitive_non_opaque_instruction(Conver
 	return true;
 }
 
-static bool build_hit_object(Converter::Impl &impl, const llvm::CallInst *instruction, spv::Id &var_id)
+static bool is_hit_object_type(const llvm::Type *type)
 {
-	auto itr = impl.hit_object.payload_to_consuming_phi.find(instruction);
-	if (itr != impl.hit_object.payload_to_consuming_phi.end())
-	{
-		auto *mapping = &impl.hit_object.payload_mapping[itr->second];
-		while (mapping->consuming_phi)
-			mapping = &impl.hit_object.payload_mapping[mapping->consuming_phi];
-		if (!mapping->var_id)
-			mapping->var_id = impl.create_variable(spv::StorageClassFunction, impl.builder().makeHitObjectType());
-		var_id = mapping->var_id;
-	}
-	else
-	{
-		var_id = impl.create_variable(spv::StorageClassFunction, impl.builder().makeHitObjectType());
-	}
+	auto *s = llvm::dyn_cast<llvm::StructType>(type);
+	return s && s->hasName() && s->getName() == "dx.types.HitObject";
+}
 
-	return true;
+bool type_contains_hitobject(const llvm::Type *type)
+{
+	if (is_hit_object_type(type))
+		return true;
+	if (auto *array = llvm::dyn_cast<llvm::ArrayType>(type))
+		return type_contains_hitobject(array->getArrayElementType());
+	if (auto *s = llvm::dyn_cast<llvm::StructType>(type))
+		for (unsigned i = 0; i < s->getStructNumElements(); ++i)
+			if (type_contains_hitobject(s->getStructElementType(i)))
+				return true;
+	return false;
+}
+
+static void collect_hit_object_paths(const llvm::Type *type, Vector<uint32_t> &path,
+                                     Vector<Vector<uint32_t>> &paths)
+{
+	if (is_hit_object_type(type))
+	{
+		path.push_back(0); // Slot field of the lowered logical value.
+		paths.push_back(path);
+		path.pop_back();
+	}
+	else if (auto *array = llvm::dyn_cast<llvm::ArrayType>(type))
+	{
+		if (!type_contains_hitobject(array->getArrayElementType()))
+			return;
+		for (uint32_t i = 0; i < array->getArrayNumElements(); ++i)
+		{
+			path.push_back(i);
+			collect_hit_object_paths(array->getArrayElementType(), path, paths);
+			path.pop_back();
+		}
+	}
+	else if (auto *s = llvm::dyn_cast<llvm::StructType>(type))
+		for (uint32_t i = 0; i < s->getStructNumElements(); ++i)
+		{
+			path.push_back(i);
+			collect_hit_object_paths(s->getStructElementType(i), path, paths);
+			path.pop_back();
+		}
+}
+
+static void initialize_hit_object_pool(Converter::Impl &impl, const llvm::Instruction *inst)
+{
+	auto &pool = impl.hit_object.pool;
+	if (pool.objects)
+		return;
+	auto &builder = impl.builder();
+	for (auto *bb : impl.hit_object.blocks)
+		for (auto &value : *bb)
+		{
+			Vector<uint32_t> path;
+			Vector<Vector<uint32_t>> paths;
+			collect_hit_object_paths(value.getType(), path, paths);
+			for (auto &p : paths)
+				pool.references.push_back({ &value, impl.create_variable_with_initializer(
+				    spv::StorageClassPrivate, builder.makeUintType(32), builder.makeUintConstant(~0u)), p });
+			if (auto *alloca = llvm::dyn_cast<llvm::AllocaInst>(&value))
+			{
+				auto *type = alloca->getType()->getPointerElementType();
+				if (!type_contains_hitobject(type))
+					continue;
+				auto type_id = impl.get_type_id(type);
+				auto var = impl.create_variable_with_initializer(
+				    spv::StorageClassPrivate, type_id, builder.makeNullConstant(type_id));
+				impl.rewrite_value(alloca, var);
+				paths.clear();
+				collect_hit_object_paths(type, path, paths);
+				for (auto &p : paths)
+					pool.memory_references.push_back({ var, p });
+			}
+		}
+	// Each SSA value and local-memory cell retains at most one slot. One extra
+	// constructor destination guarantees progress, including loop-carried values.
+	// A final slot is reserved for unbound no-op invocation.
+	auto type = builder.makeArrayType(builder.makeHitObjectType(),
+	    builder.makeUintConstant(uint32_t(pool.references.size() + pool.memory_references.size() + 2)), 0);
+	pool.objects = impl.create_variable(spv::StorageClassPrivate, type);
+}
+
+void emit_hitobject_alloca(Converter::Impl &impl, const llvm::AllocaInst *inst)
+{
+	// Private per-invocation storage keeps local copies visible to the allocator
+	// across the nonrecursive call graph. The normal GEP/load/store lowering applies.
+	initialize_hit_object_pool(impl, inst);
+}
+
+static spv::Id hit_object_component(Converter::Impl &impl, spv::Id value, uint32_t component)
+{
+	auto *op = impl.allocate(spv::OpCompositeExtract, impl.builder().makeUintType(32));
+	op->add_id(value);
+	op->add_literal(component);
+	impl.add(op);
+	return op->id;
+}
+
+static spv::Id hit_object_pointer(Converter::Impl &impl, const llvm::Instruction *inst, spv::Id slot)
+{
+	initialize_hit_object_pool(impl, inst);
+	auto &builder = impl.builder();
+	auto *op = impl.allocate(spv::OpAccessChain,
+	    builder.makePointer(spv::StorageClassPrivate, builder.makeHitObjectType()));
+	op->add_id(impl.hit_object.pool.objects);
+	op->add_id(slot);
+	impl.add(op);
+	return op->id;
+}
+
+void emit_hitobject_reference(Converter::Impl &impl, const llvm::Instruction *inst)
+{
+	if (!type_contains_hitobject(inst->getType()))
+		return;
+	initialize_hit_object_pool(impl, inst);
+	for (auto &reference : impl.hit_object.pool.references)
+	{
+		if (reference.value != inst)
+			continue;
+		auto *slot = impl.allocate(spv::OpCompositeExtract, impl.builder().makeUintType(32));
+		slot->add_id(impl.get_id_for_value(inst));
+		for (auto index : reference.path)
+			slot->add_literal(index);
+		impl.add(slot);
+		auto *op = impl.allocate(spv::OpStore);
+		op->add_ids({ reference.variable, slot->id });
+		impl.add(op);
+	}
+}
+
+static spv::Id build_hit_object(Converter::Impl &impl, const llvm::CallInst *inst, spv::Id &slot)
+{
+	initialize_hit_object_pool(impl, inst);
+	auto &builder = impl.builder();
+	auto &pool = impl.hit_object.pool;
+	Vector<spv::Id> retained;
+	for (auto &reference : pool.references)
+	{
+		auto *op = impl.allocate(spv::OpLoad, builder.makeUintType(32));
+		op->add_id(reference.variable);
+		impl.add(op);
+		retained.push_back(op->id);
+	}
+	for (auto &reference : pool.memory_references)
+	{
+		auto *ptr = impl.allocate(spv::OpAccessChain,
+		    builder.makePointer(spv::StorageClassPrivate, builder.makeUintType(32)));
+		ptr->add_id(reference.first);
+		for (auto index : reference.second)
+			ptr->add_id(builder.makeUintConstant(index));
+		impl.add(ptr);
+		auto *op = impl.allocate(spv::OpLoad, builder.makeUintType(32));
+		op->add_id(ptr->id);
+		impl.add(op);
+		retained.push_back(op->id);
+	}
+	slot = builder.makeUintConstant(uint32_t(retained.size()));
+	for (uint32_t candidate = uint32_t(retained.size()); candidate;)
+	{
+		--candidate;
+		auto candidate_id = builder.makeUintConstant(candidate);
+		auto free = builder.makeBoolConstant(true);
+		for (auto reference : retained)
+		{
+			auto *unequal = impl.allocate(spv::OpINotEqual, builder.makeBoolType());
+			unequal->add_ids({ candidate_id, reference });
+			impl.add(unequal);
+			auto *both = impl.allocate(spv::OpLogicalAnd, builder.makeBoolType());
+			both->add_ids({ free, unequal->id });
+			impl.add(both);
+			free = both->id;
+		}
+		auto *select = impl.allocate(spv::OpSelect, builder.makeUintType(32));
+		select->add_ids({ free, candidate_id, slot });
+		impl.add(select);
+		slot = select->id;
+	}
+	return hit_object_pointer(impl, inst, slot);
+}
+
+static void publish_hit_object(Converter::Impl &impl, const llvm::CallInst *inst,
+                               spv::Id slot, spv::Id sbt, bool bound)
+{
+	spv::Id components[] = { slot, sbt, impl.builder().makeUintConstant(bound ? 1 : 0) };
+	impl.rewrite_value(inst, impl.build_vector(impl.builder().makeUintType(32), components, 3));
+
+}
+
+static spv::Id consume_hit_object(Converter::Impl &impl, const llvm::CallInst *inst,
+                                  bool apply_binding = false, bool suppress_unbound = false)
+{
+	auto &builder = impl.builder();
+	auto value = impl.get_id_for_value(inst->getOperand(1));
+	auto slot = hit_object_component(impl, value, 0);
+	if (suppress_unbound)
+	{
+		// A reserved empty slot implements unbound invocation without executing
+		// hit record zero. Select indices rather than opaque pointers.
+		auto &pool = impl.hit_object.pool;
+		auto empty_slot = builder.makeUintConstant(uint32_t(pool.references.size() + pool.memory_references.size() + 1));
+		auto empty = hit_object_pointer(impl, inst, empty_slot);
+		auto *record = impl.allocate(spv::OpHitObjectRecordEmptyEXT);
+		record->add_id(empty);
+		impl.add(record);
+		auto bound = hit_object_component(impl, value, 2);
+		auto *test = impl.allocate(spv::OpINotEqual, builder.makeBoolType());
+		test->add_ids({ bound, builder.makeUintConstant(0) });
+		impl.add(test);
+		auto *select = impl.allocate(spv::OpSelect, builder.makeUintType(32));
+		select->add_ids({ test->id, slot, empty_slot });
+		impl.add(select);
+		slot = select->id;
+	}
+	auto ptr = hit_object_pointer(impl, inst, slot);
+	if (apply_binding)
+	{
+		auto sbt = hit_object_component(impl, value, 1);
+		auto *op = impl.allocate(spv::OpHitObjectSetShaderBindingTableRecordIndexEXT);
+		op->add_ids({ ptr, sbt });
+		impl.add(op);
+	}
+	return ptr;
 }
 
 bool emit_hit_object_trace_ray_instruction(Converter::Impl &impl, const llvm::CallInst *inst)
@@ -721,9 +929,8 @@ bool emit_hit_object_trace_ray_instruction(Converter::Impl &impl, const llvm::Ca
 		? emit_temp_storage_copy(impl, ray_payload, spv::StorageClassRayPayloadKHR)
 		: impl.get_id_for_value(ray_payload);
 
-	spv::Id hit_object;
-	if (!build_hit_object(impl, inst, hit_object))
-		return false;
+	spv::Id slot;
+	spv::Id hit_object = build_hit_object(impl, inst, slot);
 
 	auto *op = impl.allocate(spv::OpHitObjectTraceRayEXT);
 	op->add_ids({
@@ -746,7 +953,16 @@ bool emit_hit_object_trace_ray_instruction(Converter::Impl &impl, const llvm::Ca
 	if (needs_temp_copy)
 		emit_temp_storage_resolve(impl, ray_payload, ray_payload_var_id);
 
-	impl.rewrite_value(inst, hit_object);
+	auto *sbt = impl.allocate(spv::OpHitObjectGetShaderBindingTableRecordIndexEXT, builder.makeUintType(32));
+	sbt->add_id(hit_object);
+	impl.add(sbt);
+	auto *empty = impl.allocate(spv::OpHitObjectIsEmptyEXT, builder.makeBoolType());
+	empty->add_id(hit_object);
+	impl.add(empty);
+	auto *index = impl.allocate(spv::OpSelect, builder.makeUintType(32));
+	index->add_ids({ empty->id, builder.makeUintConstant(0), sbt->id });
+	impl.add(index);
+	publish_hit_object(impl, inst, slot, index->id, true);
 
 	return true;
 }
@@ -760,9 +976,8 @@ bool emit_hit_object_from_ray_query_instruction(Converter::Impl &impl, const llv
 
 	spv::Id ray_query = impl.get_id_for_value(inst->getOperand(1));
 
-	spv::Id hit_object;
-	if (!build_hit_object(impl, inst, hit_object))
-		return false;
+	spv::Id slot;
+	spv::Id hit_object = build_hit_object(impl, inst, slot);
 
 	spv::Id sbt_record_index = builder.makeUintConstant(0);
     spv::Id empty_struct = builder.makeStructType({}, "EmptyStruct");
@@ -777,7 +992,7 @@ bool emit_hit_object_from_ray_query_instruction(Converter::Impl &impl, const llv
 	});
 	impl.add(op);
 
-	impl.rewrite_value(inst, hit_object);
+	publish_hit_object(impl, inst, slot, sbt_record_index, false);
 
 	return true;
 }
@@ -793,9 +1008,8 @@ bool emit_hit_object_from_ray_query_with_attrs_instruction(Converter::Impl &impl
 	spv::Id hit_kind = impl.get_id_for_value(inst->getOperand(2));
 	spv::Id attributes = impl.get_id_for_value(inst->getOperand(3));
 
-	spv::Id hit_object;
-	if (!build_hit_object(impl, inst, hit_object))
-		return false;
+	spv::Id slot;
+	spv::Id hit_object = build_hit_object(impl, inst, slot);
 
 	// This is an incompatibility with HLSL. FromRayQuery should start off with a pseudo-nop state
 	// until an SBT is assigned.
@@ -811,7 +1025,7 @@ bool emit_hit_object_from_ray_query_with_attrs_instruction(Converter::Impl &impl
 	});
 	impl.add(op);
 
-	impl.rewrite_value(inst, hit_object);
+	publish_hit_object(impl, inst, slot, sbt_record_index, false);
 
 	return true;
 }
@@ -823,9 +1037,8 @@ bool emit_hit_object_make_miss_instruction(Converter::Impl &impl, const llvm::Ca
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object;
-	if (!build_hit_object(impl, inst, hit_object))
-		return false;
+	spv::Id slot;
+	spv::Id hit_object = build_hit_object(impl, inst, slot);
 
 	spv::Id ray_flags = impl.get_id_for_value(inst->getOperand(1));
 	spv::Id miss_shader_index = impl.get_id_for_value(inst->getOperand(2));
@@ -857,7 +1070,10 @@ bool emit_hit_object_make_miss_instruction(Converter::Impl &impl, const llvm::Ca
 	});
 	impl.add(op);
 
-	impl.rewrite_value(inst, hit_object);
+	auto *index = impl.allocate(spv::OpBitwiseAnd, builder.makeUintType(32));
+	index->add_ids({ miss_shader_index, builder.makeUintConstant(0xffff) });
+	impl.add(index);
+	publish_hit_object(impl, inst, slot, index->id, true);
 
 	return true;
 }
@@ -869,15 +1085,14 @@ bool emit_hit_object_make_nop_instruction(Converter::Impl &impl, const llvm::Cal
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object;
-	if (!build_hit_object(impl, inst, hit_object))
-		return false;
+	spv::Id slot;
+	spv::Id hit_object = build_hit_object(impl, inst, slot);
 
 	auto *op = impl.allocate(spv::OpHitObjectRecordEmptyEXT);
 	op->add_id(hit_object);
 	impl.add(op);
 
-	impl.rewrite_value(inst, hit_object);
+	publish_hit_object(impl, inst, slot, builder.makeUintConstant(0), false);
 
 	return true;
 }
@@ -886,18 +1101,10 @@ bool emit_hit_object_invoke_instruction(Converter::Impl &impl, const llvm::CallI
 {
 	auto &builder = impl.builder();
 
-	// Special consideration. RayQuery objects start in a pseudo-nop state and any trace should be ignored.
-	// This will not work through Phis correctly, but this is good enough to make test suite pass at least.
-	if (value_is_dx_op_instrinsic(inst->getOperand(1), DXIL::Op::HitObject_FromRayQuery) ||
-		value_is_dx_op_instrinsic(inst->getOperand(1), DXIL::Op::HitObject_FromRayQueryWithAttrs))
-	{
-		return true;
-	}
-
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object = impl.get_id_for_value(inst->getOperand(1));
+	spv::Id hit_object = consume_hit_object(impl, inst, true, true);
 	auto *ray_payload = inst->getOperand(2);
 
 	bool needs_temp_copy = impl.get_needs_temp_storage_copy(ray_payload);
@@ -912,6 +1119,9 @@ bool emit_hit_object_invoke_instruction(Converter::Impl &impl, const llvm::CallI
 	});
 	impl.add(op);
 
+	if (needs_temp_copy)
+		emit_temp_storage_resolve(impl, ray_payload, ray_payload_var_id);
+
 	return true;
 }
 
@@ -922,9 +1132,9 @@ bool emit_maybe_reoder_thread_instruction(Converter::Impl &impl, const llvm::Cal
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object = impl.get_id_for_value(inst->getOperand(1));
 	spv::Id hint = impl.get_id_for_value(inst->getOperand(2));
 	spv::Id bits = impl.get_id_for_value(inst->getOperand(3));
+	spv::Id hit_object = consume_hit_object(impl, inst, true, true);
 
 	auto *op = impl.allocate(spv::OpReorderThreadWithHitObjectEXT);
 	op->add_ids({
@@ -945,7 +1155,14 @@ bool emit_hit_object_get_value_instruction(Converter::Impl &impl, const llvm::Ca
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object = impl.get_id_for_value(instruction->getOperand(1));
+	if (opcode == spv::OpHitObjectGetShaderBindingTableRecordIndexEXT)
+	{
+		impl.rewrite_value(instruction, hit_object_component(impl,
+		    impl.get_id_for_value(instruction->getOperand(1)), 1));
+		return true;
+	}
+
+	spv::Id hit_object = consume_hit_object(impl, instruction);
 
 	if (vecsize == 1)
 	{
@@ -978,7 +1195,7 @@ bool emit_hit_object_get_matrix_value_instruction(Converter::Impl &impl, const l
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object = impl.get_id_for_value(instruction->getOperand(1));
+	spv::Id hit_object = consume_hit_object(impl, instruction);
 
 	auto *op = impl.allocate(opcode, builder.makeMatrixType(impl.get_type_id(instruction->getType()), 4, 3));
 	op->add_id(hit_object);
@@ -1004,7 +1221,7 @@ bool emit_hit_object_set_shader_table_index_instruction(Converter::Impl &impl, c
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object = impl.get_id_for_value(instruction->getOperand(1));
+	spv::Id hit_object = consume_hit_object(impl, instruction);
 	spv::Id shader_table_index = impl.get_id_for_value(instruction->getOperand(2));
 
 	auto *is_hit = impl.allocate(spv::OpHitObjectIsHitEXT, builder.makeBoolType());
@@ -1024,15 +1241,15 @@ bool emit_hit_object_set_shader_table_index_instruction(Converter::Impl &impl, c
 	masked->add_id(mask->id);
 	impl.add(masked);
 
-	auto *op = impl.allocate(spv::OpHitObjectSetShaderBindingTableRecordIndexEXT);
-	op->add_ids({
-	    hit_object,
-		masked->id,
-	});
-	impl.add(op);
-	// HitObject_SetShaderTableIndex returns new hit object, but OpHitObjectSetShaderBindingTableRecordIndexEXT does not
-	// Remap output to input.
-	impl.rewrite_value(instruction, hit_object);
+	auto value = impl.get_id_for_value(instruction->getOperand(1));
+	auto slot = hit_object_component(impl, value, 0);
+	auto *empty = impl.allocate(spv::OpHitObjectIsEmptyEXT, builder.makeBoolType());
+	empty->add_id(hit_object);
+	impl.add(empty);
+	auto *index = impl.allocate(spv::OpSelect, builder.makeUintType(32));
+	index->add_ids({ empty->id, builder.makeUintConstant(0), masked->id });
+	impl.add(index);
+	publish_hit_object(impl, instruction, slot, index->id, true);
 	return true;
 }
 
@@ -1044,7 +1261,7 @@ bool emit_hit_object_load_local_root_table_constant_instruction(Converter::Impl 
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object = impl.get_id_for_value(instruction->getOperand(1));
+	spv::Id hit_object = consume_hit_object(impl, instruction, true, true);
 	spv::Id offset = impl.get_id_for_value(instruction->getOperand(2));
 
 	spv::Id uint32 = builder.makeUintType(32);
@@ -1113,7 +1330,7 @@ bool emit_hit_object_attributes_instruction(Converter::Impl &impl, const llvm::C
 	builder.addExtension("SPV_EXT_shader_invocation_reorder");
 	builder.addCapability(spv::CapabilityShaderInvocationReorderEXT);
 
-	spv::Id hit_object = impl.get_id_for_value(instruction->getOperand(1));
+	spv::Id hit_object = consume_hit_object(impl, instruction);
 	spv::Id attributes = impl.get_id_for_value(instruction->getOperand(2));
 
 	auto *op = impl.allocate(spv::OpHitObjectGetAttributesEXT);
@@ -1142,69 +1359,4 @@ bool emit_hit_object_attributes_instruction(Converter::Impl &impl, const llvm::C
 	return true;
 }
 
-bool analyze_phi_hitobject(Converter::Impl &impl, const llvm::PHINode *instruction)
-{
-	unsigned num_blocks = instruction->getNumIncomingValues();
-	for (unsigned i = 0; i < num_blocks; i++)
-	{
-		auto *incoming = instruction->getIncomingValue(i);
-
-		// SetShaderTableIndex is the only hitobject opcode that mutates the hitobject
-		// and creates a new copy. Chain back to the original value.
-		// The original value must be undef, a callinst (makemiss/nop/trace/rq) or another PHI.
-		while (value_is_dx_op_instrinsic(incoming, DXIL::Op::HitObject_SetShaderTableIndex))
-			incoming = llvm::cast<llvm::CallInst>(incoming)->getOperand(1);
-
-		// Ensure that every incoming value is consumed by one exact PHI node.
-		// Ignore any undef inputs.
-		if (auto *call_inst = llvm::dyn_cast<llvm::CallInst>(incoming))
-		{
-			auto &mapping = impl.hit_object.payload_to_consuming_phi[call_inst];
-			if (mapping && mapping != instruction)
-			{
-				LOGE("A hitobject is used as input to multiple PHI nodes. This cannot be expressed in EXT.\n");
-				return false;
-			}
-			mapping = instruction;
-		}
-		else if (auto *phi_inst = llvm::dyn_cast<llvm::PHINode>(incoming))
-		{
-			// If another PHI node is incoming, we have to ensure that all incoming PHI nodes
-			// share the same payload.
-			auto &mapping = impl.hit_object.payload_mapping[phi_inst];
-			if (mapping.consuming_phi && mapping.consuming_phi != instruction)
-			{
-				LOGE("A phi hitobject is used as input to multiple PHI nodes. This cannot be expressed in EXT.\n");
-				return false;
-			}
-			mapping.consuming_phi = instruction;
-		}
-	}
-
-	// Ensure that codegen observes this as a HitObject.
-	impl.hit_object.payload_mapping[instruction] = {};
-	return true;
-}
-
-bool emit_hitobject_phi(Converter::Impl &impl, const llvm::PHINode *instruction)
-{
-	auto itr = impl.hit_object.payload_mapping.find(instruction);
-	if (itr != impl.hit_object.payload_mapping.end())
-	{
-		// It's not possible to express a Phi of hitobject directly due to fundamental
-		// incompatibility with HLSL version of hit objects.
-		// We'll handle this in a different way.
-		auto *mapping = &itr->second;
-		while (mapping->consuming_phi)
-			mapping = &impl.hit_object.payload_mapping[mapping->consuming_phi];
-
-		if (!mapping->var_id)
-			mapping->var_id = impl.create_variable(spv::StorageClassFunction, impl.builder().makeHitObjectType());
-
-		impl.rewrite_value(instruction, mapping->var_id);
-		return true;
-	}
-
-	return false;
-}
 }

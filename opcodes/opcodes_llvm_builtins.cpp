@@ -2250,6 +2250,11 @@ bool emit_alloca_instruction(Converter::Impl &impl, const llvm::AllocaInst *inst
 
 	if (!ags_alloca_or_global_filter(impl, instruction, pointee_type_id))
 		return false;
+	if (type_contains_hitobject(element_type))
+	{
+		emit_hitobject_alloca(impl, instruction);
+		return true;
+	}
 
 	auto storage = impl.get_effective_storage_class(instruction, spv::StorageClassFunction);
 	spv::Id var_id = impl.create_variable(storage, pointee_type_id);
@@ -2685,15 +2690,6 @@ bool analyze_phi_instruction(Converter::Impl &impl, const llvm::PHINode *instruc
 	spv::Id override_type = 0;
 	ags_filter_phi(impl, *instruction, override_type);
 
-	if (const auto *struct_type = llvm::dyn_cast<llvm::StructType>(instruction->getType()))
-	{
-		// It's not possible to express a Phi of hitobject directly due to fundamental
-		// incompatibility with HLSL version of hit objects.
-		// We'll handle this in a different way as a workaround.
-		if (struct_type->hasName() && struct_type->getName() == "dx.types.HitObject")
-			return analyze_phi_hitobject(impl, instruction);
-	}
-
 	return true;
 }
 
@@ -2742,6 +2738,11 @@ bool analyze_cmpxchg_instruction(Converter::Impl &impl, const llvm::AtomicCmpXch
 
 bool analyze_alloca_instruction(Converter::Impl &impl, const llvm::AllocaInst *inst)
 {
+	if (type_contains_hitobject(inst->getType()->getPointerElementType()))
+	{
+		impl.handle_to_storage_class[inst] = spv::StorageClassPrivate;
+		return true;
+	}
 	// Only attempt to track simple 32-bit scalar cases.
 	// We don't want to deal with DXR vector types, or weird 16-bit promotion shenanigans.
 	if (DXIL::AddressSpace(inst->getType()->getAddressSpace()) != DXIL::AddressSpace::Thread)
