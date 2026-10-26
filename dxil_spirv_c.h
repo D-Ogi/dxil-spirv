@@ -506,6 +506,7 @@ typedef enum dxil_spv_option
 	DXIL_SPV_OPTION_CONSERVATIVE_SSBO_VECTORIZATION = 56,
 	DXIL_SPV_OPTION_VIEW_INSTANCING_DRAW_LOOP = 57,
 	DXIL_SPV_OPTION_SSBO_ROBUSTNESS_SIZE_ALIGNMENT = 58,
+	DXIL_SPV_OPTION_SSBO_EXACT_SIZE_METADATA = 59,
 	DXIL_SPV_OPTION_INT_MAX = 0x7fffffff
 } dxil_spv_option;
 
@@ -607,6 +608,14 @@ typedef struct dxil_spv_option_ssbo_robustness_size_alignment
 	 * Smaller strides still require exact descriptor-size metadata. */
 	unsigned alignment;
 } dxil_spv_option_ssbo_robustness_size_alignment;
+
+typedef struct dxil_spv_option_ssbo_exact_size_metadata
+{
+	dxil_spv_option_base base;
+	/* Zero disables. Otherwise this is the byte offset of an exact uint32
+	 * buffer-view size inside each raw descriptor payload. */
+	unsigned byte_offset;
+} dxil_spv_option_ssbo_exact_size_metadata;
 
 typedef struct dxil_spv_option_typed_uav_read_without_format
 {

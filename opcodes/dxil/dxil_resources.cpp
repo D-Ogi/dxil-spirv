@@ -1467,6 +1467,68 @@ static spv::Id build_load_buffer_offset(Converter::Impl &impl, Converter::Impl::
 	return offset_id;
 }
 
+static bool build_load_exact_buffer_size(Converter::Impl &impl,
+										const Converter::Impl::ResourceReference &reference,
+										spv::Id descriptor_index, spv::Id &size_id)
+{
+	size_id = 0;
+	if (!impl.options.ssbo_exact_size_metadata_offset || !reference.bindless ||
+		reference.resource_kind != DXIL::ResourceKind::StructuredBuffer ||
+		reference.stride >= impl.options.ssbo_robustness_size_alignment ||
+		!impl.execution_mode_meta.native_16bit_operations)
+		return true;
+
+	if (impl.options.ssbo_exact_size_metadata_offset + 4 >
+		8u * impl.options.physical_address_descriptor_stride ||
+		!impl.emit_descriptor_heap_introspection_buffer())
+		return false;
+
+	auto &builder = impl.builder();
+	spv::Id buffer = impl.instrumentation.descriptor_heap_introspection_var_id;
+	auto storage = spv::StorageClassStorageBuffer;
+	if (impl.instrumentation.descriptor_heap_introspection_is_bda)
+	{
+		auto block_ptr = impl.instrumentation.descriptor_heap_introspection_block_ptr_type_id;
+		auto *address = impl.allocate(spv::OpAccessChain,
+									 builder.makePointer(spv::StorageClassUniform, block_ptr));
+		address->add_ids({buffer, builder.makeUintConstant(0)});
+		impl.add(address);
+		auto *load = impl.allocate(spv::OpLoad, block_ptr);
+		load->add_id(address->id);
+		impl.add(load);
+		buffer = load->id;
+		storage = spv::StorageClassPhysicalStorageBuffer;
+	}
+
+	// The raw-heap contract uses u32 slots for an SSBO, or uvec2 slots for
+	// a BDA view and synchronization instrumentation. Derive the layout.
+	spv::Id block = impl.instrumentation.descriptor_heap_introspection_is_bda ?
+		builder.getContainedTypeId(impl.instrumentation.descriptor_heap_introspection_block_ptr_type_id) :
+		builder.getDerefTypeId(buffer);
+	spv::Id descriptors = builder.getContainedTypeId(block, 0);
+	spv::Id payload = builder.getContainedTypeId(descriptors);
+	spv::Id words = builder.getContainedTypeId(payload, 0);
+	spv::Id word_type = builder.getContainedTypeId(words);
+	unsigned components = builder.isScalarType(word_type) ? 1 : builder.getNumTypeComponents(word_type);
+	unsigned word = impl.options.ssbo_exact_size_metadata_offset / 4;
+	auto *address = impl.allocate(spv::OpAccessChain, builder.makePointer(storage, builder.makeUintType(32)));
+	address->add_ids({buffer, builder.makeUintConstant(0), descriptor_index,
+					 builder.makeUintConstant(0), builder.makeUintConstant(word / components)});
+	if (components != 1)
+		address->add_id(builder.makeUintConstant(word % components));
+	impl.add(address);
+	auto *load = impl.allocate(spv::OpLoad, builder.makeUintType(32));
+	load->add_id(address->id);
+	if (storage == spv::StorageClassPhysicalStorageBuffer)
+	{
+		load->add_literal(spv::MemoryAccessAlignedMask);
+		load->add_literal(4);
+	}
+	impl.add(load);
+	size_id = load->id;
+	return true;
+}
+
 static bool resource_kind_is_buffer(DXIL::ResourceKind kind)
 {
 	switch (kind)
@@ -1614,6 +1676,10 @@ static bool emit_create_handle(Converter::Impl &impl, const llvm::CallInst *inst
 
 			auto &incoming_meta = impl.handle_to_resource_meta[resource_id];
 
+			spv::Id exact_size_id = 0;
+			if (!build_load_exact_buffer_size(impl, reference, offset_id, exact_size_id))
+				return false;
+
 			spv::Id offset_buffer_id = get_offset_buffer_variable(impl, resource_type, instruction, resource_range);
 			if (offset_buffer_id)
 			{
@@ -1627,6 +1693,7 @@ static bool emit_create_handle(Converter::Impl &impl, const llvm::CallInst *inst
 			meta = incoming_meta;
 			meta.non_uniform = is_non_uniform;
 			meta.index_offset_id = offset_id;
+			meta.exact_size_id = exact_size_id;
 			meta.var_alias_group = std::move(raw_declarations);
 			meta.aliased = reference.aliased;
 			meta.physical_pointer_meta.nonwritable = true;
@@ -1733,6 +1800,10 @@ static bool emit_create_handle(Converter::Impl &impl, const llvm::CallInst *inst
 
 			auto &incoming_meta = impl.handle_to_resource_meta[resource_id];
 
+			spv::Id exact_size_id = 0;
+			if (!build_load_exact_buffer_size(impl, reference, offset_id, exact_size_id))
+				return false;
+
 			spv::Id offset_buffer_id = get_offset_buffer_variable(impl, resource_type, instruction, resource_range);
 			if (offset_buffer_id)
 			{
@@ -1746,6 +1817,7 @@ static bool emit_create_handle(Converter::Impl &impl, const llvm::CallInst *inst
 			meta = incoming_meta;
 			meta.non_uniform = is_non_uniform;
 			meta.index_offset_id = offset_id;
+			meta.exact_size_id = exact_size_id;
 			meta.var_alias_group = std::move(raw_declarations);
 			meta.aliased = reference.aliased;
 			meta.rov = reference.rov;

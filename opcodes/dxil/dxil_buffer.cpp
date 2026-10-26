@@ -529,7 +529,7 @@ static BufferAccessInfo build_buffer_access(Converter::Impl &impl, const llvm::C
 	unsigned range_alignment = impl.options.ssbo_robustness_size_alignment;
 	bool exact_element_bounds = !index_offset_id && meta.storage == spv::StorageClassStorageBuffer &&
 	                           meta.kind == DXIL::ResourceKind::StructuredBuffer &&
-	                           meta.stride >= range_alignment && (meta.stride & (range_alignment - 1)) &&
+	                           (meta.exact_size_id || (meta.stride >= range_alignment && (meta.stride & (range_alignment - 1)))) &&
 	                           impl.execution_mode_meta.native_16bit_operations && type_is_16bit(data_type);
 
 	if (meta.kind == DXIL::ResourceKind::RawBuffer)
@@ -581,8 +581,8 @@ static BufferAccessInfo build_buffer_access(Converter::Impl &impl, const llvm::C
 		impl.add(length);
 
 		auto *count = impl.allocate(spv::OpUDiv, builder.makeUintType(32));
-		count->add_id(length->id);
-		count->add_id(builder.makeUintConstant(meta.stride / 2));
+		count->add_id(meta.exact_size_id ? meta.exact_size_id : length->id);
+		count->add_id(builder.makeUintConstant(meta.exact_size_id ? meta.stride : meta.stride / 2));
 		impl.add(count);
 
 		auto *in_bounds = impl.allocate(spv::OpULessThan, builder.makeBoolType());

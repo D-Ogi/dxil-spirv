@@ -3388,7 +3388,7 @@ bool Converter::Impl::emit_descriptor_heap_introspection_buffer()
 	if (!sync_val)
 	{
 		builder().addMemberDecoration(block_type_id, 0, spv::DecorationNonWritable);
-		if (use_full_descriptor)
+		if (use_full_descriptor && !options.ssbo_exact_size_metadata_offset)
 			builder().addMemberDecoration(block_type_id, 0, spv::DecorationNonReadable);
 	}
 	builder().addMemberName(block_type_id, 0, "descriptors");
@@ -9103,6 +9103,9 @@ ConvertedFunction Converter::Impl::convert_entry_point()
 
 	bool need_bda =
 		options.physical_storage_buffer ||
+		(options.ssbo_exact_size_metadata_offset &&
+		 options.meta_descriptor_mappings[int(MetaDescriptor::RawDescriptorHeapView)].kind ==
+		     MetaDescriptorKind::UBOContainingBDA) ||
 		(execution_model_lib_target &&
 		 execution_model == spv::ExecutionModelGLCompute);
 
@@ -9556,6 +9559,10 @@ void Converter::Impl::set_option(const OptionBase &cap)
 		options.ssbo_robustness_size_alignment = align.alignment;
 		break;
 	}
+
+	case Option::SSBOExactSizeMetadata:
+		options.ssbo_exact_size_metadata_offset = static_cast<const OptionSSBOExactSizeMetadata &>(cap).byte_offset;
+		break;
 
 	case Option::TypedUAVReadWithoutFormat:
 	{

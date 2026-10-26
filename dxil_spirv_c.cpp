@@ -581,13 +581,13 @@ dxil_spv_result dxil_spv_parsed_blob_get_entry_index_by_name(dxil_spv_parsed_blo
                                                              unsigned *index)
 {
     for (size_t i = 0, n = blob->entry_points.size(); i < n; i++)
-    {
+	{
         if (blob->entry_points[i].demangled == entry || blob->entry_points[i].mangled == entry)
         {
             *index = unsigned(i);
             return DXIL_SPV_SUCCESS;
         }
-    }
+	}
 
     return DXIL_SPV_ERROR_GENERIC;
 }
@@ -1063,6 +1063,16 @@ dxil_spv_result dxil_spv_converter_add_option(dxil_spv_converter converter, cons
 		OptionSSBORobustnessSizeAlignment helper;
 		helper.alignment = reinterpret_cast<const dxil_spv_option_ssbo_robustness_size_alignment *>(option)->alignment;
 		if (!helper.alignment || (helper.alignment & (helper.alignment - 1)))
+			return DXIL_SPV_ERROR_INVALID_ARGUMENT;
+		converter->options.emplace_back(duplicate(helper));
+		break;
+	}
+
+	case DXIL_SPV_OPTION_SSBO_EXACT_SIZE_METADATA:
+	{
+		OptionSSBOExactSizeMetadata helper;
+		helper.byte_offset = reinterpret_cast<const dxil_spv_option_ssbo_exact_size_metadata *>(option)->byte_offset;
+		if (helper.byte_offset & 3)
 			return DXIL_SPV_ERROR_INVALID_ARGUMENT;
 		converter->options.emplace_back(duplicate(helper));
 		break;

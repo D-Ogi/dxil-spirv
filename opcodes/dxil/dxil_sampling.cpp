@@ -998,7 +998,12 @@ bool emit_get_dimensions_instruction(Converter::Impl &impl, const llvm::CallInst
 
 	if (meta.storage == spv::StorageClassStorageBuffer)
 	{
-		if (meta.index_offset_id)
+		if (meta.exact_size_id)
+		{
+			dimensions_op = impl.allocate(spv::OpCopyObject, builder.makeUintType(32));
+			dimensions_op->add_id(meta.exact_size_id);
+		}
+		else if (meta.index_offset_id)
 		{
 			dimensions_op = impl.allocate(spv::OpCompositeExtract, builder.makeUintType(32));
 			dimensions_op->add_id(meta.index_offset_id);
@@ -1011,8 +1016,8 @@ bool emit_get_dimensions_instruction(Converter::Impl &impl, const llvm::CallInst
 			dimensions_op->add_literal(0);
 		}
 
-		ssbo_element_size = meta.raw_component_vecsize *
-		                    raw_component_type_to_bits(meta.component_type) / 8;
+		ssbo_element_size = meta.exact_size_id ? 1 : meta.raw_component_vecsize *
+							raw_component_type_to_bits(meta.component_type) / 8;
 
 		impl.add(dimensions_op);
 		num_coords = 1;

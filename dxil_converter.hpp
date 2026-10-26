@@ -281,6 +281,7 @@ enum class Option : uint32_t
 	ConservativeSSBOVectorization = 56,
 	ViewInstancingDrawLoop = 57,
 	SSBORobustnessSizeAlignment = 58,
+	SSBOExactSizeMetadata = 59,
 	Count
 };
 
@@ -396,6 +397,12 @@ struct OptionSSBORobustnessSizeAlignment : OptionBase
 	{
 	}
 	unsigned alignment = 1;
+};
+
+struct OptionSSBOExactSizeMetadata : OptionBase
+{
+	OptionSSBOExactSizeMetadata() : OptionBase(Option::SSBOExactSizeMetadata) {}
+	unsigned byte_offset = 0;
 };
 
 struct OptionTypedUAVReadWithoutFormat : OptionBase

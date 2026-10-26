@@ -550,6 +550,7 @@ struct Converter::Impl
 		spv::Id counter_var_id;
 		PhysicalPointerMeta physical_pointer_meta;
 		spv::Id index_offset_id;
+		spv::Id exact_size_id;
 		ResourceMetaInstrumentation instrumentation;
 	};
 	UnorderedMap<spv::Id, ResourceMeta> handle_to_resource_meta;
@@ -748,6 +749,7 @@ struct Converter::Impl
 		unsigned sbt_descriptor_size_sampler_log2 = 0;
 		unsigned ssbo_alignment = 16;
 		unsigned ssbo_robustness_size_alignment = 1;
+		unsigned ssbo_exact_size_metadata_offset = 0;
 		bool typed_uav_read_without_format = false;
 		bool bindless_typed_buffer_offsets = false;
 		bool storage_16bit_input_output = false;
