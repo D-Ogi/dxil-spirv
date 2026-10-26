@@ -280,6 +280,7 @@ enum class Option : uint32_t
 	ShaderAbort = 55,
 	ConservativeSSBOVectorization = 56,
 	ViewInstancingDrawLoop = 57,
+	SSBORobustnessSizeAlignment = 58,
 	Count
 };
 
@@ -383,6 +384,15 @@ struct OptionSSBOAlignment : OptionBase
 {
 	OptionSSBOAlignment()
 		: OptionBase(Option::SSBOAlignment)
+	{
+	}
+	unsigned alignment = 1;
+};
+
+struct OptionSSBORobustnessSizeAlignment : OptionBase
+{
+	OptionSSBORobustnessSizeAlignment()
+		: OptionBase(Option::SSBORobustnessSizeAlignment)
 	{
 	}
 	unsigned alignment = 1;

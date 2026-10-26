@@ -32,6 +32,8 @@ struct BufferAccessInfo
 {
 	spv::Id index_id;
 	unsigned raw_vec_size;
+	spv::Id element_in_bounds = 0;
+	spv::Id scalar_array_length = 0;
 };
 
 bool emit_buffer_load_instruction(Converter::Impl &impl, const llvm::CallInst *instruction, bool is_vector);

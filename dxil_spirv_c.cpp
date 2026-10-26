@@ -1058,6 +1058,16 @@ dxil_spv_result dxil_spv_converter_add_option(dxil_spv_converter converter, cons
 		break;
 	}
 
+	case DXIL_SPV_OPTION_SSBO_ROBUSTNESS_SIZE_ALIGNMENT:
+	{
+		OptionSSBORobustnessSizeAlignment helper;
+		helper.alignment = reinterpret_cast<const dxil_spv_option_ssbo_robustness_size_alignment *>(option)->alignment;
+		if (!helper.alignment || (helper.alignment & (helper.alignment - 1)))
+			return DXIL_SPV_ERROR_INVALID_ARGUMENT;
+		converter->options.emplace_back(duplicate(helper));
+		break;
+	}
+
 	case DXIL_SPV_OPTION_TYPED_UAV_READ_WITHOUT_FORMAT:
 	{
 		OptionTypedUAVReadWithoutFormat helper;

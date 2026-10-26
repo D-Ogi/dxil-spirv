@@ -363,6 +363,13 @@ unsigned raw_access_structured_vectorize(
 	if (vecsize > AccessTracking::MaxVecSize || vecsize == 1)
 		return 1;
 
+	// The bounds query and the access must use the same scalar declaration. This
+	// decision also runs during access tracking, before SSBO aliases are declared.
+	unsigned range_alignment = impl.options.ssbo_robustness_size_alignment;
+	if (impl.execution_mode_meta.native_16bit_operations && type_is_16bit(type) &&
+	    stride >= range_alignment && (stride & (range_alignment - 1)))
+		return 1;
+
 	if (raw_access_structured_can_vectorize(impl, type, index, stride, byte_offset, vecsize))
 		return vecsize;
 	else
@@ -515,8 +522,15 @@ static BufferAccessInfo build_buffer_access(Converter::Impl &impl, const llvm::C
 	const auto &meta = impl.handle_to_resource_meta[image_id];
 
 	spv::Id index_id = 0;
+	spv::Id element_in_bounds = 0;
+	spv::Id scalar_array_length = 0;
 	unsigned raw_vecsize = 1;
 	unsigned addr_shift_log2 = raw_buffer_data_type_to_addr_shift_log2(impl, data_type);
+	unsigned range_alignment = impl.options.ssbo_robustness_size_alignment;
+	bool exact_element_bounds = !index_offset_id && meta.storage == spv::StorageClassStorageBuffer &&
+	                           meta.kind == DXIL::ResourceKind::StructuredBuffer &&
+	                           meta.stride >= range_alignment && (meta.stride & (range_alignment - 1)) &&
+	                           impl.execution_mode_meta.native_16bit_operations && type_is_16bit(data_type);
 
 	if (meta.kind == DXIL::ResourceKind::RawBuffer)
 	{
@@ -553,6 +567,32 @@ static BufferAccessInfo build_buffer_access(Converter::Impl &impl, const llvm::C
 	}
 	else
 		index_id = impl.get_id_for_value(instruction->getOperand(2 + operand_offset));
+
+	// A rounded Vulkan SSBO range can include part of the next D3D12 structure.
+	// Recover the exact element count before flattening the access. If the stride
+	// is at least the range granularity, the rounding cannot add a whole element.
+	// Smaller strides need exact descriptor metadata and cannot be recovered here.
+	if (exact_element_bounds)
+	{
+		spv::Id scalar_buffer = get_buffer_alias_handle(impl, meta, image_id, RawType::Integer, RawWidth::B16, 1);
+		auto *length = impl.allocate(spv::OpArrayLength, builder.makeUintType(32));
+		length->add_id(scalar_buffer);
+		length->add_literal(0);
+		impl.add(length);
+
+		auto *count = impl.allocate(spv::OpUDiv, builder.makeUintType(32));
+		count->add_id(length->id);
+		count->add_id(builder.makeUintConstant(meta.stride / 2));
+		impl.add(count);
+
+		auto *in_bounds = impl.allocate(spv::OpULessThan, builder.makeBoolType());
+		in_bounds->add_id(impl.get_id_for_value(instruction->getOperand(2 + operand_offset)));
+		in_bounds->add_id(count->id);
+		impl.add(in_bounds);
+
+		element_in_bounds = in_bounds->id;
+		scalar_array_length = length->id;
+	}
 
 	if (index_offset_id)
 	{
@@ -628,7 +668,23 @@ static BufferAccessInfo build_buffer_access(Converter::Impl &impl, const llvm::C
 		index_id = select_op->id;
 	}
 
-	return { index_id, raw_vecsize };
+	return { index_id, raw_vecsize, element_in_bounds, scalar_array_length };
+}
+
+static spv::Id build_buffer_component_index(Converter::Impl &impl, const BufferAccessInfo &access, unsigned component)
+{
+	spv::Id index = impl.build_offset(access.index_id, component);
+	if (access.element_in_bounds)
+	{
+		// Select one-past-the-end for EACH component, after adding its offset.
+		// A fixed large sentinel can fall inside a near-4GB view; adding component
+		// offsets to an OOB sentinel can also wrap back into the buffer.
+		auto *select = impl.allocate(spv::OpSelect, impl.builder().makeUintType(32));
+		select->add_ids({ access.element_in_bounds, index, access.scalar_array_length });
+		impl.add(select);
+		index = select->id;
+	}
+	return index;
 }
 
 static spv::Id build_physical_pointer_address_for_raw_load_store(Converter::Impl &impl, const llvm::CallInst *instruction)
@@ -1100,7 +1156,7 @@ bool emit_buffer_load_instruction(Converter::Impl &impl, const llvm::CallInst *i
 					auto *chain_op = impl.allocate(spv::OpAccessChain, ptr_type);
 					chain_op->add_id(image_id);
 					chain_op->add_id(builder.makeUintConstant(0));
-					chain_op->add_id(impl.build_offset(access.index_id, i));
+					chain_op->add_id(build_buffer_component_index(impl, access, i));
 					impl.add(chain_op);
 
 					if (meta.non_uniform)
@@ -1764,7 +1820,7 @@ bool emit_buffer_store_instruction(Converter::Impl &impl, const llvm::CallInst *
 					spv::OpAccessChain, builder.makePointer(spv::StorageClassStorageBuffer, elem_type_id));
 				chain_op->add_id(image_id);
 				chain_op->add_id(builder.makeUintConstant(0));
-				chain_op->add_id(impl.build_offset(access.index_id, i));
+				chain_op->add_id(build_buffer_component_index(impl, access, i));
 				impl.add(chain_op);
 
 				if (meta.non_uniform)

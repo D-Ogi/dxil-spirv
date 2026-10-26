@@ -9549,6 +9549,14 @@ void Converter::Impl::set_option(const OptionBase &cap)
 		break;
 	}
 
+	case Option::SSBORobustnessSizeAlignment:
+	{
+		auto &align = static_cast<const OptionSSBORobustnessSizeAlignment &>(cap);
+		assert(align.alignment && !(align.alignment & (align.alignment - 1)));
+		options.ssbo_robustness_size_alignment = align.alignment;
+		break;
+	}
+
 	case Option::TypedUAVReadWithoutFormat:
 	{
 		auto &uav = static_cast<const OptionTypedUAVReadWithoutFormat &>(cap);

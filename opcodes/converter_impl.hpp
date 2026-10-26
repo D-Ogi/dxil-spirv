@@ -747,6 +747,7 @@ struct Converter::Impl
 		unsigned sbt_descriptor_size_srv_uav_cbv_log2 = 0;
 		unsigned sbt_descriptor_size_sampler_log2 = 0;
 		unsigned ssbo_alignment = 16;
+		unsigned ssbo_robustness_size_alignment = 1;
 		bool typed_uav_read_without_format = false;
 		bool bindless_typed_buffer_offsets = false;
 		bool storage_16bit_input_output = false;
