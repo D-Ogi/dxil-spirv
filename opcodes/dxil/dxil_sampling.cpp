@@ -1125,21 +1125,32 @@ bool emit_get_dimensions_instruction(Converter::Impl &impl, const llvm::CallInst
 	}
 	else if (meta.kind == DXIL::ResourceKind::StructuredBuffer)
 	{
-		Operation *elem_count_op = impl.allocate(spv::OpUDiv, builder.makeUintType(32));
-
-		if (meta.index_offset_id != 0)
-		{
-			// If the offset buffer is pre-shifted, shift the divider as well.
-			if (!meta.aliased)
-				elem_count_op->add_ids({ dimensions_op->id, builder.makeUintConstant(meta.stride / ssbo_element_size) });
-			else
-				elem_count_op->add_ids({ dimensions_op->id, builder.makeUintConstant(meta.stride) });
-		}
+		// Aliased offset-buffer lengths are bytes; ordinary SSBO lengths are
+		// array elements. A native-half structure need not have a byte stride
+		// divisible by that element size (e.g. a 6-byte structure in uint[]).
+		uint32_t unit = meta.index_offset_id && meta.aliased ? 1 : ssbo_element_size;
+		auto binary = [&](spv::Op opcode, spv::Id a, spv::Id b) {
+			auto *op = impl.allocate(opcode, builder.makeUintType(32));
+			op->add_ids({ a, b });
+			impl.add(op);
+			return op;
+		};
+		if (meta.stride % unit == 0)
+			dimensions_op = binary(spv::OpUDiv, dimensions_op->id, builder.makeUintConstant(meta.stride / unit));
 		else
-			elem_count_op->add_ids({ dimensions_op->id, builder.makeUintConstant(meta.stride / ssbo_element_size) });
-
-		impl.add(elem_count_op);
-		dimensions_op = elem_count_op;
+		{
+			// floor(length * unit / stride), without overflowing a 32-bit
+			// byte count near 4 GiB and without requiring shaderInt64.
+			spv::Id length = dimensions_op->id;
+			spv::Id stride = builder.makeUintConstant(meta.stride);
+			spv::Id scale = builder.makeUintConstant(unit);
+			auto *quotient = binary(spv::OpUDiv, length, stride);
+			auto *remainder = binary(spv::OpUMod, length, stride);
+			auto *whole = binary(spv::OpIMul, quotient->id, scale);
+			auto *tail_bytes = binary(spv::OpIMul, remainder->id, scale);
+			auto *tail = binary(spv::OpUDiv, tail_bytes->id, stride);
+			dimensions_op = binary(spv::OpIAdd, whole->id, tail->id);
+		}
 	}
 
 	if (!levels_or_samples_op && (access_meta.access_mask & (1u << 3)) != 0)
