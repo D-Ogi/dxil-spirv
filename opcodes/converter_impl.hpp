@@ -889,6 +889,7 @@ struct Converter::Impl
 			// If the shader exports Layer offset, this is ignored,
 			// and we must fall back to draw level instancing.
 			uint32_t draw_loop_base_spec_id = UINT32_MAX;
+			bool dynamic_draw_data = false;
 			uint32_t view_index_to_view_instance_spec_id = UINT32_MAX;
 
 			// If not UINT32_MAX, implies view instancing needs to apply a non-zero offset to output ViewportIndex.

@@ -282,6 +282,7 @@ enum class Option : uint32_t
 	ViewInstancingDrawLoop = 57,
 	SSBORobustnessSizeAlignment = 58,
 	SSBOExactSizeMetadata = 59,
+	ViewInstancingDynamicData = 60,
 	Count
 };
 
@@ -889,6 +890,11 @@ struct OptionExtendedNonSemantic : OptionBase
 };
 
 // Separate option preserves the existing ViewInstancing option ABI.
+struct OptionViewInstancingDynamicData : OptionBase
+{
+    OptionViewInstancingDynamicData() : OptionBase(Option::ViewInstancingDynamicData) {}
+};
+
 struct OptionViewInstancingDrawLoop : OptionBase
 {
     OptionViewInstancingDrawLoop() : OptionBase(Option::ViewInstancingDrawLoop) {}

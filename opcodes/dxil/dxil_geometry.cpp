@@ -127,7 +127,12 @@ static bool emit_view_instance_ubo(Converter::Impl &impl)
 		return false;
 	}
 
-	spv::Id type_id = builder.makeStructType({ u32_type }, "ViewInstancingOffsetsUBO");
+	spv::Id type_id = impl.options.multiview.dynamic_draw_data ?
+	    builder.makeStructType({u32_type, u32_type, u32_type, u32_type, u32_type}, "BC250DynamicViewV1") :
+	    builder.makeStructType({ u32_type }, "ViewInstancingOffsetsUBO");
+	if (impl.options.multiview.dynamic_draw_data)
+		for (unsigned i = 1; i < 5; i++)
+			builder.addMemberDecoration(type_id, i, spv::DecorationOffset, 4 * i);
 	builder.addDecoration(type_id, spv::DecorationBlock);
 	builder.addMemberDecoration(type_id, 0, spv::DecorationOffset, 0);
 	builder.addMemberName(type_id, 0, "ViewID_Layer");
@@ -146,6 +151,19 @@ static bool emit_view_instance_ubo(Converter::Impl &impl)
 static spv::Id build_draw_loop_constant(Converter::Impl &impl, unsigned field)
 {
 	auto &builder = impl.builder();
+	if (impl.options.multiview.dynamic_draw_data)
+	{
+		if (!emit_view_instance_ubo(impl)) return 0;
+		auto *chain = impl.allocate(spv::OpAccessChain,
+		    builder.makePointer(spv::StorageClassUniform, builder.makeUintType(32)));
+		chain->add_id(impl.multiview.view_index_to_view_instance_id);
+		chain->add_id(builder.makeUintConstant(field));
+		impl.add(chain);
+		auto *load = impl.allocate(spv::OpLoad, builder.makeUintType(32));
+		load->add_id(chain->id);
+		impl.add(load);
+		return load->id;
+	}
 	auto &id = impl.multiview.draw_loop_spec_ids[field];
 	if (!id)
 	{

@@ -9925,6 +9925,11 @@ void Converter::Impl::set_option(const OptionBase &cap)
 		break;
 	}
 
+	case Option::ViewInstancingDynamicData:
+		options.multiview.dynamic_draw_data = true;
+		options.multiview.draw_loop_base_spec_id = 0xfffffffeu;
+		break;
+
 	case Option::ViewInstancingDrawLoop:
 		options.multiview.draw_loop_base_spec_id = static_cast<const OptionViewInstancingDrawLoop &>(cap).base_spec_id;
 		break;
