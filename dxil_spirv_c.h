@@ -965,6 +965,10 @@ DXIL_SPV_PUBLIC_API dxil_spv_result dxil_spv_parse_dxil(const void *data, size_t
 
 /* Dumps the LLVM IR representation to console. For debugging. */
 DXIL_SPV_PUBLIC_API void dxil_spv_parsed_blob_dump_llvm_ir(dxil_spv_parsed_blob blob);
+/* Callback strings are borrowed for the duration of the callback. No shader is
+ * compiled. On failure the caller must discard any outputs already reported. */
+DXIL_SPV_PUBLIC_API dxil_spv_result dxil_spv_parsed_blob_scan_mesh_outputs(dxil_spv_parsed_blob blob,
+        const char *entry, dxil_spv_shader_stage_io_remapper_cb callback, void *userdata);
 
 DXIL_SPV_PUBLIC_API dxil_spv_result dxil_spv_parsed_blob_get_disassembled_ir(dxil_spv_parsed_blob blob, const char **str);
 DXIL_SPV_PUBLIC_API dxil_spv_result dxil_spv_parsed_blob_get_raw_ir(dxil_spv_parsed_blob blob, const void **data, size_t *size);

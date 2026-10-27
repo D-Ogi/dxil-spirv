@@ -10030,6 +10030,59 @@ void Converter::scan_resources(ResourceRemappingInterface *iface, const LLVMBCPa
 	Impl::scan_resources(iface, bitcode_parser);
 }
 
+bool Converter::scan_mesh_outputs(ResourceRemappingInterface *iface, const LLVMBCParser &parser, const char *entry)
+{
+	auto &module = parser.get_module();
+	if (!iface || !module.getNamedMetadata("dx.entryPoints"))
+		return false;
+	auto *ep = get_entry_point_meta(module, entry);
+	if (!ep || ep->getNumOperands() < 3 || get_execution_model(module, ep) != spv::ExecutionModelMeshEXT)
+		return false;
+	if (!ep->getOperand(2))
+		return true;
+	auto *signature = llvm::dyn_cast<llvm::MDNode>(ep->getOperand(2));
+	if (!signature || signature->getNumOperands() < 3)
+		return false;
+
+	uint32_t primitive_offset = 0;
+	for (unsigned part = 1; part <= 2; ++part)
+	{
+		if (!signature->getOperand(part))
+			continue;
+		auto *outputs = llvm::dyn_cast<llvm::MDNode>(signature->getOperand(part));
+		if (!outputs)
+			return false;
+		for (unsigned i = 0; i < outputs->getNumOperands(); ++i)
+		{
+			auto *output = llvm::dyn_cast<llvm::MDNode>(outputs->getOperand(i));
+			if (!output || output->getNumOperands() < 10)
+				return false;
+			auto rows = get_constant_metadata(output, 6);
+			auto row = get_constant_metadata(output, 8);
+			auto column = get_constant_metadata(output, 9);
+			// Match emit_outputs(): include system-value rows in the offset.
+			if (part == 1)
+				primitive_offset = std::max(primitive_offset, row + rows);
+			if (static_cast<DXIL::Semantic>(get_constant_metadata(output, 3)) != DXIL::Semantic::User)
+				continue;
+			auto name = get_string_metadata(output, 1);
+			unsigned index = 0;
+			if (output->getOperand(4))
+			{
+				auto *indices = llvm::dyn_cast<llvm::MDNode>(output->getOperand(4));
+				if (!indices || !indices->getNumOperands())
+					return false;
+				index = get_constant_metadata(indices, 0);
+			}
+			D3DStageIO d3d = {name.c_str(), index, row, rows};
+			VulkanStageIO vk = {row + (part == 2 ? primitive_offset : 0), column, part == 2};
+			if (!iface->remap_stage_output(d3d, vk))
+				return false;
+		}
+	}
+	return true;
+}
+
 void Converter::add_option(const OptionBase &cap)
 {
 	impl->set_option(cap);

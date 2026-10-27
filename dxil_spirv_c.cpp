@@ -727,6 +727,18 @@ dxil_spv_result dxil_spv_parsed_blob_scan_resources(dxil_spv_parsed_blob blob,
 	return DXIL_SPV_SUCCESS;
 }
 
+dxil_spv_result dxil_spv_parsed_blob_scan_mesh_outputs(dxil_spv_parsed_blob blob,
+        const char *entry, dxil_spv_shader_stage_io_remapper_cb callback, void *userdata)
+{
+	if (!blob || !callback)
+		return DXIL_SPV_ERROR_INVALID_ARGUMENT;
+	Remapper remapper;
+	remapper.stage_output_remapper = callback;
+	remapper.stage_output_userdata = userdata;
+	return Converter::scan_mesh_outputs(&remapper, blob->bc, entry) ?
+	       DXIL_SPV_SUCCESS : DXIL_SPV_ERROR_INVALID_ARGUMENT;
+}
+
 void dxil_spv_parsed_blob_free(dxil_spv_parsed_blob blob)
 {
 	delete blob;

@@ -1091,6 +1091,9 @@ public:
 
 	static ShaderStage get_shader_stage(const LLVMBCParser &bitcode_parser, const char *entry = nullptr);
 	static void scan_resources(ResourceRemappingInterface *iface, const LLVMBCParser &bitcode_parser);
+	// Reads mesh declarations only, without emitting or compiling a shader.
+	static bool scan_mesh_outputs(ResourceRemappingInterface *iface, const LLVMBCParser &parser,
+	                              const char *entry = nullptr);
 
 	static Vector<String> get_entry_points(const LLVMBCParser &parser);
 	static bool entry_point_matches(const String &mangled, const char *user);
