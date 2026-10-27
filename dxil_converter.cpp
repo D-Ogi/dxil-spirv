@@ -4849,6 +4849,9 @@ bool Converter::Impl::emit_stage_output_variables()
 
 	unsigned clip_distance_count = 0;
 	unsigned cull_distance_count = 0;
+	unsigned geometry_clip_count[4] = {};
+	unsigned geometry_cull_count[4] = {};
+	unsigned geometry_clip_cull_elements[4] = {};
 	bool auto_patch_location = patch_location_offset == ~0u &&
 	                           (execution_model == spv::ExecutionModelTessellationControl ||
 	                            execution_model == spv::ExecutionModelMeshEXT);
@@ -4920,6 +4923,53 @@ bool Converter::Impl::emit_stage_output_variables()
 		else if (system_value == DXIL::Semantic::Coverage)
 		{
 			type_id = builder.makeArrayType(type_id, builder.makeUintConstant(1), 0);
+		}
+		else if (execution_model == spv::ExecutionModelGeometry &&
+		         (system_value == DXIL::Semantic::ClipDistance || system_value == DXIL::Semantic::CullDistance))
+		{
+			unsigned stream = get_geometry_shader_stream_index(output);
+			if (stream >= 4 || !rows || !cols || rows > 8 || cols > 4 ||
+			    rows * cols > 8 || geometry_clip_count[stream] + geometry_cull_count[stream] + rows * cols > 8 ||
+			    geometry_clip_cull_elements[stream] + rows > 2)
+			{
+				LOGE("Invalid geometry clip/cull signature bounds.\n");
+				return false;
+			}
+			geometry_clip_cull_elements[stream] += rows;
+			bool clip = system_value == DXIL::Semantic::ClipDistance;
+			auto &count = clip ? geometry_clip_count[stream] : geometry_cull_count[stream];
+			auto &meta = output_clip_cull_meta[element_id];
+			meta = { count, cols, clip ? spv::BuiltInClipDistance : spv::BuiltInCullDistance };
+			meta.stream = stream;
+			count += rows * cols;
+			output_elements_meta[element_id] = { 0, actual_element_type, 0, system_value };
+			if (resource_mapping_iface)
+			{
+				VulkanStreamOutput xfb = {};
+				if (!resource_mapping_iface->remap_stream_output({ semantic_name.c_str(), semantic_index, stream }, xfb))
+					return false;
+				if (xfb.enable)
+				{
+					// Separate capture from rasterization: semantic offsets need not
+					// be contiguous in the flattened ClipDistance/CullDistance array.
+					meta.xfb_variable_id = create_variable(spv::StorageClassOutput, type_id, semantic_name.c_str());
+					meta.xfb_rows = rows;
+					builder.addCapability(spv::CapabilityTransformFeedback);
+					builder.addExecutionMode(spirv_module.get_entry_function(), spv::ExecutionModeXfb);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationOffset, xfb.offset);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationXfbStride, xfb.stride);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationXfbBuffer, xfb.buffer_index);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationLocation, start_row + start_row_for_geometry_stream[stream]);
+					if (start_col)
+						builder.addDecoration(meta.xfb_variable_id, spv::DecorationComponent, start_col);
+					if (stream)
+					{
+						builder.addCapability(spv::CapabilityGeometryStreams);
+						builder.addDecoration(meta.xfb_variable_id, spv::DecorationStream, stream);
+					}
+				}
+			}
+			continue;
 		}
 		else if (system_value == DXIL::Semantic::ClipDistance)
 		{
@@ -5050,6 +5100,28 @@ bool Converter::Impl::emit_stage_output_variables()
 			builder.addDecoration(variable_id, spv::DecorationLocation, vk_output.location);
 			if (vk_output.component != 0)
 				builder.addDecoration(variable_id, spv::DecorationComponent, vk_output.component);
+		}
+	}
+
+	for (unsigned stream = 0; stream < 4; ++stream)
+	{
+		for (unsigned kind = 0; kind < 2; ++kind)
+		{
+			unsigned count = kind ? geometry_cull_count[stream] : geometry_clip_count[stream];
+			if (!count)
+				continue;
+			auto builtin = kind ? spv::BuiltInCullDistance : spv::BuiltInClipDistance;
+			auto semantic = kind ? DXIL::Semantic::CullDistance : DXIL::Semantic::ClipDistance;
+			auto variable = create_variable(spv::StorageClassOutput, get_type_id(DXIL::ComponentType::F32, count, 1, true));
+			emit_builtin_decoration(variable, semantic, spv::StorageClassOutput);
+			if (stream)
+			{
+				builder.addCapability(spv::CapabilityGeometryStreams);
+				builder.addDecoration(variable, spv::DecorationStream, stream);
+			}
+			for (auto &entry : output_clip_cull_meta)
+				if (entry.second.stream == stream && entry.second.builtin == builtin)
+					entry.second.variable_id = variable;
 		}
 	}
 

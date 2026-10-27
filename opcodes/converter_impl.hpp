@@ -606,6 +606,10 @@ struct Converter::Impl
 		unsigned offset;
 		unsigned row_stride;
 		spv::BuiltIn builtin;
+		unsigned stream = 0;
+		spv::Id variable_id = 0;
+		spv::Id xfb_variable_id = 0;
+		unsigned xfb_rows = 0;
 	};
 	UnorderedMap<uint32_t, ElementMeta> input_elements_meta;
 	UnorderedMap<uint32_t, ElementMeta> output_elements_meta;

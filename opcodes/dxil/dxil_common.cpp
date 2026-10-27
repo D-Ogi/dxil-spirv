@@ -438,6 +438,8 @@ spv::Id get_clip_cull_distance_access_chain(Converter::Impl &impl, const llvm::C
 	auto &builder = impl.builder();
 	uint32_t var_id = storage == spv::StorageClassOutput ? impl.spirv_module.get_builtin_shader_output(meta.builtin) :
 	                  impl.spirv_module.get_builtin_shader_input(meta.builtin);
+	if (storage == spv::StorageClassOutput && meta.variable_id)
+		var_id = meta.variable_id;
 
 	Operation *op = impl.allocate(spv::OpAccessChain, builder.makePointer(storage, builder.makeFloatType(32)));
 	op->add_id(var_id);
@@ -522,6 +524,33 @@ bool emit_store_clip_cull_distance(Converter::Impl &impl, const llvm::CallInst *
 	Operation *store_op = impl.allocate(spv::OpStore);
 	store_op->add_ids({ ptr_id, store_value });
 	impl.add(store_op);
+	if (meta.xfb_variable_id)
+	{
+		// Clip/cull builtins are aggregated per stream for rasterization. Xfb
+		// declarations remain per semantic, with independently assigned offsets.
+		auto &builder = impl.builder();
+		spv::Id shadow_ptr = meta.xfb_variable_id;
+		if (meta.xfb_rows > 1 || meta.row_stride > 1)
+		{
+			auto *access = impl.allocate(spv::OpAccessChain,
+			    builder.makePointer(spv::StorageClassOutput, builder.makeFloatType(32)));
+			access->add_id(shadow_ptr);
+			if (meta.xfb_rows > 1)
+				access->add_id(impl.get_id_for_value(instruction->getOperand(2)));
+			if (meta.row_stride > 1)
+			{
+				uint32_t column;
+				if (!get_constant_operand(instruction, 3, &column))
+					return false;
+				access->add_id(builder.makeUintConstant(column));
+			}
+			impl.add(access);
+			shadow_ptr = access->id;
+		}
+		auto *shadow_store = impl.allocate(spv::OpStore);
+		shadow_store->add_ids({ shadow_ptr, store_value });
+		impl.add(shadow_store);
+	}
 	return true;
 }
 
