@@ -4971,6 +4971,40 @@ bool Converter::Impl::emit_stage_output_variables()
 			}
 			continue;
 		}
+		else if ((execution_model == spv::ExecutionModelVertex ||
+		          execution_model == spv::ExecutionModelTessellationEvaluation) &&
+		         (system_value == DXIL::Semantic::ClipDistance || system_value == DXIL::Semantic::CullDistance))
+		{
+			// Keep the raster builtin array unchanged. Stream output uses a
+			// separate semantic variable so independently assigned Xfb offsets
+			// do not depend on the flattened clip/cull array layout.
+			bool clip = system_value == DXIL::Semantic::ClipDistance;
+			auto &count = clip ? clip_distance_count : cull_distance_count;
+			auto &meta = output_clip_cull_meta[element_id];
+			meta = { count, cols, clip ? spv::BuiltInClipDistance : spv::BuiltInCullDistance };
+			count += rows * cols;
+			output_elements_meta[element_id] = { 0, actual_element_type, 0, system_value };
+			if (resource_mapping_iface)
+			{
+				VulkanStreamOutput xfb = {};
+				if (!resource_mapping_iface->remap_stream_output({ semantic_name.c_str(), semantic_index, 0 }, xfb))
+					return false;
+				if (xfb.enable)
+				{
+					meta.xfb_variable_id = create_variable(spv::StorageClassOutput, type_id, semantic_name.c_str());
+					meta.xfb_rows = rows;
+					builder.addCapability(spv::CapabilityTransformFeedback);
+					builder.addExecutionMode(spirv_module.get_entry_function(), spv::ExecutionModeXfb);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationOffset, xfb.offset);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationXfbStride, xfb.stride);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationXfbBuffer, xfb.buffer_index);
+					builder.addDecoration(meta.xfb_variable_id, spv::DecorationLocation, start_row);
+					if (start_col)
+						builder.addDecoration(meta.xfb_variable_id, spv::DecorationComponent, start_col);
+				}
+			}
+			continue;
+		}
 		else if (system_value == DXIL::Semantic::ClipDistance)
 		{
 			// DX is rather weird here and you can declare clip distance either as a vector or array, or both!
