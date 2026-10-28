@@ -356,7 +356,8 @@ unsigned raw_access_structured_vectorize(
 	const llvm::Value *index,
 	unsigned stride,
     const llvm::Value *byte_offset,
-	uint32_t vecsize)
+	uint32_t vecsize,
+	bool physical_pointer)
 {
 	// TODO: It's theoretically possible to split massive load-store into chunks of 2 or 4,
 	// but that's overkill for now.
@@ -365,8 +366,11 @@ unsigned raw_access_structured_vectorize(
 
 	// The bounds query and the access must use the same scalar declaration. This
 	// decision also runs during access tracking, before SSBO aliases are declared.
+	// A physical pointer has no SSBO alias and no bounds query. Its caller selects
+	// the vector stride from raw_access_structured_can_vectorize(), so the index
+	// must use the same vector size.
 	unsigned range_alignment = impl.options.ssbo_robustness_size_alignment;
-	if (impl.execution_mode_meta.native_16bit_operations && type_is_16bit(type) &&
+	if (!physical_pointer && impl.execution_mode_meta.native_16bit_operations && type_is_16bit(type) &&
 	    stride >= range_alignment && (stride & (range_alignment - 1)))
 		return 1;
 
@@ -555,7 +559,8 @@ static BufferAccessInfo build_buffer_access(Converter::Impl &impl, const llvm::C
 			instruction->getOperand(2 + operand_offset),
 		    meta.stride,
 			instruction->getOperand(3 + operand_offset),
-			vecsize);
+			vecsize,
+			meta.storage == spv::StorageClassPhysicalStorageBuffer);
 
 		index_id = build_structured_index(
 			impl,
@@ -749,6 +754,10 @@ static spv::Id build_vectorized_physical_load_store_access(Converter::Impl &impl
 	if (can_vectorize)
 	{
 		auto access = build_buffer_access(impl, instruction, 0, 0, element_type, vecsize);
+		// The pointer type uses a stride of vecsize elements. An index in other units
+		// addresses the wrong element, so use raw pointer arithmetic instead.
+		if (access.raw_vec_size != vecsize)
+			return 0;
 		return access.index_id;
 	}
 	else

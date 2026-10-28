@@ -86,7 +86,8 @@ unsigned raw_access_structured_vectorize(Converter::Impl &impl, const llvm::Type
                                          const llvm::Value *index,
                                          unsigned stride,
                                          const llvm::Value *byte_offset,
-                                         uint32_t vecsize);
+                                         uint32_t vecsize,
+                                         bool physical_pointer = false);
 
 void emit_buffer_synchronization_validation(Converter::Impl &impl, const llvm::CallInst *instruction,
                                             BDAOperation bda_operation, bool is_vector);
