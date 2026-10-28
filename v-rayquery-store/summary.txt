@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 2cab3de7bf2877f3 asm sha b556b44ed3a26921 val rc=1 error: line 76: OpStore Pointer <id> '47[%47]'s type does not match Object <id> '45[%45]'s type.
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 2cab3de7bf2877f3 asm sha b556b44ed3a26921 val rc=1 error: line 76: OpStore Pointer <id> '47[%47]'s type does not match Object <id> '45[%45]'s type.
+identical spv: True

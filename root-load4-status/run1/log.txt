@@ -1,0 +1,20 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=1 (0x00000001)
+
+[ERROR]: Cannot use BDA and sparse feedback. >:(
+[ERROR]: Failed DXIL opcode 68.
+[ERROR]: Failed to emit instruction.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.
+
+$ dxil-spirv rc=1 (0x00000001)
+
+[ERROR]: Cannot use BDA and sparse feedback. >:(
+[ERROR]: Failed DXIL opcode 68.
+[ERROR]: Failed to emit instruction.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.
+
+$ spirv-val -

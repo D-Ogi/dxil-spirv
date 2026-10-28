@@ -1,0 +1,105 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 60
+; Schema: 0
+OpCapability Shader
+OpCapability Geometry
+OpCapability VulkanMemoryModel
+OpMemoryModel Logical Vulkan
+OpEntryPoint Geometry %3 "main" %11 %15 %16 %18 %20 %21 %23
+OpExecutionMode %3 Invocations 24
+OpExecutionMode %3 OutputVertices 3
+OpExecutionMode %3 InputPoints
+OpExecutionMode %3 OutputPoints
+OpName %3 "main"
+OpName %11 "TEXCOORD"
+OpName %15 "COLOR"
+OpName %16 "SV_Position"
+OpName %18 "TEXCOORD"
+OpName %20 "COLOR"
+OpName %21 "SV_Position"
+OpName %23 "SV_IsFrontFace"
+OpDecorate %11 Location 0
+OpDecorate %15 Location 1
+OpDecorate %16 BuiltIn Position
+OpDecorate %18 Location 0
+OpDecorate %20 Location 1
+OpDecorate %21 BuiltIn Position
+OpDecorate %23 BuiltIn FrontFacing
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeFloat 32
+%6 = OpTypeVector %5 2
+%7 = OpTypeInt 32 0
+%8 = OpConstant %7 1
+%9 = OpTypeArray %6 %8
+%10 = OpTypePointer Input %9
+%11 = OpVariable %10 Input
+%12 = OpTypeVector %5 4
+%13 = OpTypeArray %12 %8
+%14 = OpTypePointer Input %13
+%15 = OpVariable %14 Input
+%16 = OpVariable %14 Input
+%17 = OpTypePointer Output %6
+%18 = OpVariable %17 Output
+%19 = OpTypePointer Output %12
+%20 = OpVariable %19 Output
+%21 = OpVariable %19 Output
+%22 = OpTypePointer Output %7
+%23 = OpVariable %22 Output
+%24 = OpTypePointer Input %5
+%26 = OpConstant %7 0
+%35 = OpConstant %7 2
+%38 = OpConstant %7 3
+%48 = OpTypePointer Output %5
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %59
+%59 = OpLabel
+%25 = OpAccessChain %24 %11 %26 %26
+%27 = OpLoad %5 %25
+%28 = OpAccessChain %24 %11 %26 %8
+%29 = OpLoad %5 %28
+%30 = OpAccessChain %24 %15 %26 %26
+%31 = OpLoad %5 %30
+%32 = OpAccessChain %24 %15 %26 %8
+%33 = OpLoad %5 %32
+%34 = OpAccessChain %24 %15 %26 %35
+%36 = OpLoad %5 %34
+%37 = OpAccessChain %24 %15 %26 %38
+%39 = OpLoad %5 %37
+%40 = OpAccessChain %24 %16 %26 %26
+%41 = OpLoad %5 %40
+%42 = OpAccessChain %24 %16 %26 %8
+%43 = OpLoad %5 %42
+%44 = OpAccessChain %24 %16 %26 %35
+%45 = OpLoad %5 %44
+%46 = OpAccessChain %24 %16 %26 %38
+%47 = OpLoad %5 %46
+%49 = OpAccessChain %48 %18 %26
+OpStore %49 %27
+%50 = OpAccessChain %48 %18 %8
+OpStore %50 %29
+%51 = OpAccessChain %48 %20 %26
+OpStore %51 %31
+%52 = OpAccessChain %48 %20 %8
+OpStore %52 %33
+%53 = OpAccessChain %48 %20 %35
+OpStore %53 %36
+%54 = OpAccessChain %48 %20 %38
+OpStore %54 %39
+%55 = OpAccessChain %48 %21 %26
+OpStore %55 %41
+%56 = OpAccessChain %48 %21 %8
+OpStore %56 %43
+%57 = OpAccessChain %48 %21 %35
+OpStore %57 %45
+%58 = OpAccessChain %48 %21 %38
+OpStore %58 %47
+OpStore %23 %26
+OpEmitVertex
+OpEndPrimitive
+OpReturn
+OpFunctionEnd
+

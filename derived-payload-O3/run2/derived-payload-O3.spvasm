@@ -1,0 +1,81 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 40
+; Schema: 0
+OpCapability Shader
+OpCapability UniformBufferArrayDynamicIndexing
+OpCapability SampledImageArrayDynamicIndexing
+OpCapability StorageBufferArrayDynamicIndexing
+OpCapability StorageImageArrayDynamicIndexing
+OpCapability ImageBuffer
+OpCapability RayTracingKHR
+OpCapability RuntimeDescriptorArray
+OpCapability UniformBufferArrayNonUniformIndexing
+OpCapability SampledImageArrayNonUniformIndexing
+OpCapability StorageBufferArrayNonUniformIndexing
+OpCapability StorageImageArrayNonUniformIndexing
+OpCapability VulkanMemoryModel
+OpExtension "SPV_EXT_descriptor_indexing"
+OpExtension "SPV_KHR_ray_tracing"
+OpMemoryModel Logical Vulkan
+OpEntryPoint RayGenerationKHR %3 "main" %8 %12 %18
+OpName %3 "main"
+OpName %8 "RTAS"
+OpName %12 "O"
+OpName %14 ""
+OpName %15 ""
+OpName %16 ""
+OpDecorate %8 DescriptorSet 0
+OpDecorate %8 Binding 0
+OpDecorate %12 DescriptorSet 0
+OpDecorate %12 Binding 0
+OpDecorate %12 NonReadable
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 1
+%6 = OpTypeAccelerationStructureKHR
+%7 = OpTypePointer UniformConstant %6
+%8 = OpVariable %7 UniformConstant
+%9 = OpTypeInt 32 0
+%10 = OpTypeImage %9 Buffer 0 0 0 2 R32ui
+%11 = OpTypePointer UniformConstant %10
+%12 = OpVariable %11 UniformConstant
+%13 = OpTypeFloat 32
+%14 = OpTypeStruct %13
+%15 = OpTypeStruct %14 %13
+%16 = OpTypeStruct %15 %13
+%17 = OpTypePointer RayPayloadKHR %16
+%18 = OpVariable %17 RayPayloadKHR
+%20 = OpTypePointer RayPayloadKHR %13
+%22 = OpConstant %9 0
+%23 = OpConstant %13 0
+%25 = OpConstant %9 1
+%27 = OpConstant %9 255
+%28 = OpConstant %13 1
+%29 = OpTypeVector %13 3
+%37 = OpTypeVector %9 4
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %39
+%39 = OpLabel
+%19 = OpLoad %6 %8
+%21 = OpInBoundsAccessChain %20 %18 %22 %22 %22
+OpStore %21 %23
+%24 = OpInBoundsAccessChain %20 %18 %22 %25
+OpStore %24 %23
+%26 = OpInBoundsAccessChain %20 %18 %25
+OpStore %26 %23
+%30 = OpCompositeConstruct %29 %23 %23 %23
+%31 = OpCompositeConstruct %29 %23 %23 %28
+OpTraceRayKHR %19 %22 %27 %22 %25 %22 %30 %23 %31 %28 %18
+%32 = OpLoad %13 %21
+%33 = OpLoad %13 %24
+%34 = OpFAdd %13 %33 %32
+%35 = OpLoad %10 %12
+%36 = OpBitcast %9 %34
+%38 = OpCompositeConstruct %37 %36 %36 %36 %36
+OpImageWrite %35 %22 %38 NonPrivateTexel
+OpReturn
+OpFunctionEnd
+

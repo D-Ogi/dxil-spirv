@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 58: OpStore Pointer <id> '30[%30]'s type does not match Object <id> '28[%28]'s type.
+  OpStore %30 %28

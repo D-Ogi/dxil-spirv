@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T lib_6_3 -Od -Fo c3-derived-payload.dxil raytracing_derived_payload.hlsl
+dxil-spirv c3-derived-payload.dxil --entry raygen1 --asm --output c3-derived-payload.spvasm
+dxil-spirv c3-derived-payload.dxil --entry raygen1 --output c3-derived-payload.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout c3-derived-payload.spv

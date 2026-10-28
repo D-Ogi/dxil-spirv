@@ -1,0 +1,2 @@
+rc=1 error: line 68: AtomicExchange: expected Pointer to point to a value of type Result Type
+  %48 = OpAtomicExchange %uint %47 %uint_2 %uint_0 %46

@@ -1,0 +1,201 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 151
+; Schema: 0
+OpCapability Shader
+OpCapability Int64
+OpCapability Int64Atomics
+OpCapability ImageBuffer
+OpCapability Int64ImageEXT
+OpCapability VulkanMemoryModel
+OpExtension "SPV_EXT_shader_image_int64"
+OpMemoryModel Logical Vulkan
+OpEntryPoint Fragment %3 "main" %8 %12 %16 %19 %20 %21 %24
+OpExecutionMode %3 OriginUpperLeft
+OpName %3 "main"
+OpName %19 "A"
+OpName %20 "B"
+OpName %21 "C"
+OpName %24 "SV_Target"
+OpName %33 "UDiv"
+OpName %31 "num"
+OpName %32 "den"
+OpDecorate %8 DescriptorSet 0
+OpDecorate %8 Binding 0
+OpDecorate %12 DescriptorSet 0
+OpDecorate %12 Binding 1
+OpDecorate %16 DescriptorSet 0
+OpDecorate %16 Binding 2
+OpDecorate %19 Flat
+OpDecorate %19 Location 0
+OpDecorate %20 Flat
+OpDecorate %20 Location 0
+OpDecorate %20 Component 1
+OpDecorate %21 Flat
+OpDecorate %21 Location 0
+OpDecorate %21 Component 2
+OpDecorate %24 Location 0
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeFloat 32
+%6 = OpTypeImage %5 Buffer 0 0 0 2 R32f
+%7 = OpTypePointer UniformConstant %6
+%8 = OpVariable %7 UniformConstant
+%9 = OpTypeInt 32 1
+%10 = OpTypeImage %9 Buffer 0 0 0 2 R32i
+%11 = OpTypePointer UniformConstant %10
+%12 = OpVariable %11 UniformConstant
+%13 = OpTypeInt 64 0
+%14 = OpTypeImage %13 Buffer 0 0 0 2 R64ui
+%15 = OpTypePointer UniformConstant %14
+%16 = OpVariable %15 UniformConstant
+%17 = OpTypeInt 32 0
+%18 = OpTypePointer Input %17
+%19 = OpVariable %18 Input
+%20 = OpVariable %18 Input
+%21 = OpVariable %18 Input
+%22 = OpTypeVector %5 4
+%23 = OpTypePointer Output %22
+%24 = OpVariable %23 Output
+%30 = OpTypeFunction %17 %17 %17
+%35 = OpConstant %17 4294967295
+%38 = OpTypeBool
+%40 = OpConstantNull %17
+%49 = OpTypePointer Image %5
+%51 = OpConstant %17 0
+%53 = OpConstant %17 5
+%55 = OpTypePointer Image %9
+%61 = OpTypePointer Image %13
+%118 = OpConstant %17 1065353216
+%122 = OpConstant %17 1073741824
+%142 = OpTypePointer Output %5
+%145 = OpConstant %17 1
+%147 = OpConstant %17 2
+%149 = OpConstant %17 3
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %150
+%150 = OpLabel
+%25 = OpLoad %17 %21
+%26 = OpLoad %17 %20
+%27 = OpLoad %17 %19
+%28 = OpISub %17 %26 %25
+%29 = OpConvertUToF %5 %28
+%43 = OpFunctionCall %17 %33 %26 %25
+%44 = OpUConvert %13 %26
+%45 = OpUConvert %13 %25
+%46 = OpIMul %13 %44 %45
+%47 = OpLoad %6 %8
+%48 = OpBitcast %17 %29
+%50 = OpImageTexelPointer %49 %8 %27 %51
+%52 = OpAtomicExchange %5 %50 %53 %51 %48
+%54 = OpLoad %10 %12
+%56 = OpImageTexelPointer %55 %12 %27 %51
+%58 = OpBitcast %9 %43
+%57 = OpAtomicExchange %9 %56 %53 %51 %58
+%59 = OpBitcast %17 %57
+%60 = OpLoad %14 %16
+%62 = OpImageTexelPointer %61 %16 %27 %51
+%63 = OpAtomicExchange %13 %62 %53 %51 %46
+%64 = OpConvertSToF %5 %43
+%65 = OpLoad %6 %8
+%66 = OpBitcast %17 %64
+%67 = OpImageTexelPointer %49 %8 %27 %51
+%68 = OpAtomicExchange %5 %67 %53 %51 %66
+%69 = OpLoad %6 %8
+%70 = OpImageTexelPointer %49 %8 %27 %51
+%71 = OpAtomicExchange %5 %70 %53 %51 %48
+%72 = OpBitcast %5 %71
+%73 = OpConvertFToS %17 %72
+%74 = OpLoad %6 %8
+%75 = OpImageTexelPointer %49 %8 %27 %51
+%76 = OpAtomicExchange %5 %75 %53 %51 %66
+%77 = OpConvertFToU %17 %29
+%78 = OpLoad %10 %12
+%79 = OpImageTexelPointer %55 %12 %27 %51
+%81 = OpBitcast %9 %77
+%80 = OpAtomicExchange %9 %79 %53 %51 %81
+%82 = OpBitcast %17 %80
+%83 = OpConvertFToS %13 %29
+%84 = OpLoad %14 %16
+%85 = OpImageTexelPointer %61 %16 %27 %51
+%86 = OpAtomicExchange %13 %85 %53 %51 %83
+%87 = OpConvertSToF %5 %86
+%88 = OpLoad %6 %8
+%89 = OpBitcast %17 %87
+%90 = OpImageTexelPointer %49 %8 %27 %51
+%91 = OpAtomicCompareExchange %5 %90 %53 %51 %51 %89 %48
+%92 = OpConvertSToF %5 %73
+%93 = OpLoad %6 %8
+%94 = OpBitcast %17 %92
+%95 = OpImageTexelPointer %49 %8 %27 %51
+%96 = OpAtomicCompareExchange %5 %95 %53 %51 %51 %94 %66
+%97 = OpLoad %6 %8
+%98 = OpImageTexelPointer %49 %8 %27 %51
+%99 = OpAtomicCompareExchange %5 %98 %53 %51 %51 %94 %48
+%100 = OpLoad %6 %8
+%101 = OpImageTexelPointer %49 %8 %27 %51
+%102 = OpAtomicCompareExchange %5 %101 %53 %51 %51 %89 %66
+%103 = OpLoad %6 %8
+%104 = OpImageTexelPointer %49 %8 %27 %51
+%105 = OpAtomicCompareExchange %5 %104 %53 %51 %51 %89 %48
+%106 = OpLoad %6 %8
+%107 = OpImageTexelPointer %49 %8 %27 %51
+%108 = OpAtomicCompareExchange %5 %107 %53 %51 %51 %94 %66
+%109 = OpLoad %6 %8
+%110 = OpImageTexelPointer %49 %8 %27 %51
+%111 = OpAtomicCompareExchange %5 %110 %53 %51 %51 %94 %48
+%112 = OpLoad %6 %8
+%113 = OpImageTexelPointer %49 %8 %27 %51
+%114 = OpAtomicCompareExchange %5 %113 %53 %51 %51 %89 %66
+%115 = OpLoad %6 %8
+%116 = OpImageTexelPointer %49 %8 %27 %51
+%117 = OpAtomicExchange %5 %116 %53 %51 %118
+%119 = OpLoad %6 %8
+%120 = OpImageTexelPointer %49 %8 %27 %51
+%121 = OpAtomicExchange %5 %120 %53 %51 %122
+%123 = OpLoad %6 %8
+%124 = OpImageTexelPointer %49 %8 %27 %51
+%125 = OpAtomicCompareExchange %5 %124 %53 %51 %51 %122 %118
+%126 = OpLoad %6 %8
+%127 = OpImageTexelPointer %49 %8 %27 %51
+%128 = OpAtomicCompareExchange %5 %127 %53 %51 %51 %122 %66
+%129 = OpLoad %6 %8
+%130 = OpImageTexelPointer %49 %8 %27 %51
+%131 = OpAtomicCompareExchange %5 %130 %53 %51 %51 %89 %118
+%132 = OpLoad %6 %8
+%133 = OpImageTexelPointer %49 %8 %27 %51
+%134 = OpAtomicCompareExchange %5 %133 %53 %51 %51 %122 %118
+%135 = OpLoad %6 %8
+%136 = OpImageTexelPointer %49 %8 %27 %51
+%137 = OpAtomicCompareExchange %5 %136 %53 %51 %51 %94 %118
+%138 = OpLoad %6 %8
+%139 = OpImageTexelPointer %49 %8 %27 %51
+%140 = OpAtomicCompareExchange %5 %139 %53 %51 %51 %122 %94
+%141 = OpBitcast %5 %140
+%143 = OpAccessChain %142 %24 %51
+OpStore %143 %141
+%144 = OpAccessChain %142 %24 %145
+OpStore %144 %141
+%146 = OpAccessChain %142 %24 %147
+OpStore %146 %141
+%148 = OpAccessChain %142 %24 %149
+OpStore %148 %141
+OpReturn
+OpFunctionEnd
+%33 = OpFunction %17 None %30
+%31 = OpFunctionParameter %17
+%32 = OpFunctionParameter %17
+%34 = OpLabel
+%39 = OpIEqual %38 %32 %40
+OpSelectionMerge %37 Flatten
+OpBranchConditional %39 %37 %36
+%36 = OpLabel
+%41 = OpUDiv %17 %31 %32
+OpBranch %37
+%37 = OpLabel
+%42 = OpPhi %17 %35 %34 %41 %36
+OpReturnValue %42
+OpFunctionEnd
+

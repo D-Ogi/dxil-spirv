@@ -1,0 +1,76 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 49
+; Schema: 0
+OpCapability Shader
+OpCapability VulkanMemoryModel
+OpCapability DemoteToHelperInvocation
+OpExtension "SPV_EXT_demote_to_helper_invocation"
+OpMemoryModel Logical Vulkan
+OpEntryPoint Vertex %3 "main" %12 %14 %18
+OpName %3 "main"
+OpName %10 ""
+OpName %14 "OUT"
+OpDecorate %9 ArrayStride 16
+OpMemberDecorate %10 0 Offset 0
+OpDecorate %10 Block
+OpDecorate %12 DescriptorSet 0
+OpDecorate %12 Binding 0
+OpDecorate %14 Location 0
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpConstant %5 1
+%7 = OpTypeFloat 32
+%8 = OpTypeVector %7 4
+%9 = OpTypeArray %8 %6
+%10 = OpTypeStruct %9
+%11 = OpTypePointer Uniform %10
+%12 = OpVariable %11 Uniform
+%13 = OpTypePointer Output %8
+%14 = OpVariable %13 Output
+%15 = OpTypeArray %5 %6
+%16 = OpConstantNull %15
+%17 = OpTypePointer Private %15
+%18 = OpVariable %17 Private %16
+%19 = OpConstant %5 0
+%20 = OpTypePointer Uniform %8
+%27 = OpTypeBool
+%29 = OpConstant %7 0
+%30 = OpConstant %7 1
+%36 = OpTypePointer Private %5
+%41 = OpTypePointer Output %7
+%45 = OpConstant %5 2
+%47 = OpConstant %5 3
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %48
+%48 = OpLabel
+%21 = OpAccessChain %20 %12 %19 %19
+%22 = OpLoad %8 %21
+%23 = OpCompositeExtract %7 %22 0
+%24 = OpCompositeExtract %7 %22 1
+%25 = OpCompositeExtract %7 %22 2
+%26 = OpCompositeExtract %7 %22 3
+%28 = OpIsHelperInvocationEXT %27
+%31 = OpSelect %7 %28 %30 %29
+%32 = OpFAdd %7 %23 %31
+%33 = OpFAdd %7 %24 %31
+%34 = OpFAdd %7 %25 %31
+%35 = OpFAdd %7 %26 %31
+%37 = OpAccessChain %36 %18 %19
+%38 = OpLoad %5 %37
+%39 = OpAccessChain %36 %18 %19
+%40 = OpLoad %5 %39
+%42 = OpAccessChain %41 %14 %19
+OpStore %42 %32
+%43 = OpAccessChain %41 %14 %6
+OpStore %43 %33
+%44 = OpAccessChain %41 %14 %45
+OpStore %44 %34
+%46 = OpAccessChain %41 %14 %47
+OpStore %46 %35
+OpReturn
+OpFunctionEnd
+

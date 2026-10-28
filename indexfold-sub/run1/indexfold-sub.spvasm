@@ -1,0 +1,53 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 30
+; Schema: 0
+OpCapability Shader
+OpCapability SampledBuffer
+OpCapability ImageBuffer
+OpCapability VulkanMemoryModel
+OpMemoryModel Logical Vulkan
+OpEntryPoint GLCompute %3 "main" %8 %11 %16
+OpExecutionMode %3 LocalSize 64 1 1
+OpName %3 "main"
+OpDecorate %8 DescriptorSet 0
+OpDecorate %8 Binding 0
+OpDecorate %11 DescriptorSet 0
+OpDecorate %11 Binding 0
+OpDecorate %11 NonReadable
+OpDecorate %16 BuiltIn GlobalInvocationId
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpTypeImage %5 Buffer 0 0 0 1 Unknown
+%7 = OpTypePointer UniformConstant %6
+%8 = OpVariable %7 UniformConstant
+%9 = OpTypeImage %5 Buffer 0 0 0 2 R32ui
+%10 = OpTypePointer UniformConstant %9
+%11 = OpVariable %10 UniformConstant
+%14 = OpTypeVector %5 3
+%15 = OpTypePointer Input %14
+%16 = OpVariable %15 Input
+%17 = OpTypePointer Input %5
+%19 = OpConstant %5 0
+%22 = OpConstant %5 63
+%23 = OpConstant %5 4294967233
+%25 = OpTypeVector %5 4
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %29
+%29 = OpLabel
+%12 = OpLoad %9 %11
+%13 = OpLoad %6 %8
+%18 = OpAccessChain %17 %16 %19
+%20 = OpLoad %5 %18
+%21 = OpISub %5 %22 %20
+%24 = OpIAdd %5 %20 %23
+%26 = OpImageFetch %25 %13 %24
+%27 = OpCompositeExtract %5 %26 0
+%28 = OpCompositeConstruct %25 %27 %27 %27 %27
+OpImageWrite %12 %20 %28 NonPrivateTexel
+OpReturn
+OpFunctionEnd
+

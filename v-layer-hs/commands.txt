@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -O0 -T hs_6_2 -Fo v-layer-hs.dxil target_version_hull.hlsl
+dxil-spirv v-layer-hs.dxil  --asm --output v-layer-hs.spvasm
+dxil-spirv v-layer-hs.dxil  --output v-layer-hs.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout v-layer-hs.spv

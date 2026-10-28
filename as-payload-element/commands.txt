@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T as_6_5 -E main -Fo as-payload-element.dxil as-payload-element.hlsl
+dxil-spirv as-payload-element.dxil  --asm --output as-payload-element.spvasm
+dxil-spirv as-payload-element.dxil  --output as-payload-element.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout as-payload-element.spv

@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T cs_6_0 -E main -Fo root-load4-status.dxil root-load4-status.hlsl
+dxil-spirv root-load4-status.dxil --root-descriptor srv 0 0 --asm --output root-load4-status.spvasm
+dxil-spirv root-load4-status.dxil --root-descriptor srv 0 0 --output root-load4-status.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout root-load4-status.spv

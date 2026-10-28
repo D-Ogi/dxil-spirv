@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+[ERROR]: SPIRV-Tools message: End of input reached while decoding OpDecorate starting at word 54: expected more operands after 3 words.
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 13: End of input reached while decoding OpDecorate starting at word 54: expected more operands after 3 words.

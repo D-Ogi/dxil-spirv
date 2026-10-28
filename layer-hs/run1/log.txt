@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 109: [VUID-Layer-Layer-04272] Vulkan spec allows BuiltIn Layer to be used only with Vertex, TessellationEvaluation, Geometry, or Fragment execution models. ID <57> (OpAccessChain) is referencing ID <14> (OpVariable) which is decorated with BuiltIn Layer in function <30> called with execution model TessellationControl.
+  %57 = OpAccessChain %_ptr_Input_uint %SV_RenderTargetArrayIndex %36

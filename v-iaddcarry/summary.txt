@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha ae4e3357102c0152 asm sha 61af2c27ce364096 val rc=1 error: line 56: Expected Result Type struct member types to be identical: IAddCarry
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha ae4e3357102c0152 asm sha 61af2c27ce364096 val rc=1 error: line 56: Expected Result Type struct member types to be identical: IAddCarry
+identical spv: True

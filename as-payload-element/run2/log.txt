@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 35: Payload must be the result of a OpVariable
+  OpEmitMeshTasksEXT %uint_1 %uint_1 %uint_1 %20

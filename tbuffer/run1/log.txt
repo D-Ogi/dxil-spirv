@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+[ERROR]: SPIRV-Tools message: Invalid dimensionality operand: 2147483647
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 14: Invalid dimensionality operand: 2147483647

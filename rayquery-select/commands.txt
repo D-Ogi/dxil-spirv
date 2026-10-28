@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T cs_6_5 -E main -Fo rayquery-select.dxil rayquery-select.hlsl
+dxil-spirv rayquery-select.dxil  --asm --output rayquery-select.spvasm
+dxil-spirv rayquery-select.dxil  --output rayquery-select.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout rayquery-select.spv

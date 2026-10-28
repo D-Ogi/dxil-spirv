@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 4edc1e15a53a38dd asm sha - val rc=1 error: line 14: Invalid dimensionality operand: 2147483647
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 4edc1e15a53a38dd asm sha - val rc=1 error: line 14: Invalid dimensionality operand: 2147483647
+identical spv: True

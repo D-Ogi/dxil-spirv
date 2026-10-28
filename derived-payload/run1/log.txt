@@ -1,0 +1,10 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=3221225477 (0xC0000005)
+
+
+$ dxil-spirv rc=3221225477 (0xC0000005)
+
+
+$ spirv-val -

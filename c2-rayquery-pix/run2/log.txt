@@ -1,0 +1,12 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=3221226505 (0xC0000409)
+
+[ERROR]: Invalid type ID in cast<T>.
+
+$ dxil-spirv rc=3221226505 (0xC0000409)
+
+[ERROR]: Invalid type ID in cast<T>.
+
+$ spirv-val -

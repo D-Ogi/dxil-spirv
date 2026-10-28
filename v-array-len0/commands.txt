@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -E main -T ps_6_0 -HV 2021 -DWRAPCB=1 -Fo v-array-len0.dxil DependentWithBuiltinTemplate.hlsl
+dxil-spirv v-array-len0.dxil  --asm --output v-array-len0.spvasm
+dxil-spirv v-array-len0.dxil  --output v-array-len0.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout v-array-len0.spv

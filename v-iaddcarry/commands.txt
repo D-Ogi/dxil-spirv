@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -E main -T ps_6_0 -Fo v-iaddcarry.dxil AddUint64.hlsl
+dxil-spirv v-iaddcarry.dxil  --asm --output v-iaddcarry.spvasm
+dxil-spirv v-iaddcarry.dxil  --output v-iaddcarry.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout v-iaddcarry.spv

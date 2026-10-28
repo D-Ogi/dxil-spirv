@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 134: Result type (OpTypeVector) does not match the type that results from indexing into the composite (OpTypeFloat).
+  %57 = OpCompositeExtract %v4float %56 0

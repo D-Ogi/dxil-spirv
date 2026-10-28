@@ -1,0 +1,2 @@
+rc=1 error: line 76: OpStore Pointer <id> '47[%47]'s type does not match Object <id> '45[%45]'s type.
+  OpStore %47 %45

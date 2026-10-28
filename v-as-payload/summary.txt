@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 5aafd54f6aa2b805 asm sha a7adc1e45befa06d val rc=1 error: line 406: Payload must be the result of a OpVariable
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 5aafd54f6aa2b805 asm sha a7adc1e45befa06d val rc=1 error: line 406: Payload must be the result of a OpVariable
+identical spv: True

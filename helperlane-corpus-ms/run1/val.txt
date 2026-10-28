@@ -1,0 +1,4 @@
+rc=1 error: line 63: OpEntryPoint Entry Point <id> '3[%main]'s callgraph contains function <id> '3[%main]', which cannot be used with the current execution model:
+OpIsHelperInvocationEXT requires Fragment execution model
+
+  %main = OpFunction %void None %2

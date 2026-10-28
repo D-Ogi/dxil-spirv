@@ -1,0 +1,5 @@
+rc=1 error: line 49: OpEntryPoint Entry Point <id> '3[%main]'s callgraph contains function <id> '3[%main]', which cannot be used with the current execution model:
+[VUID-StandaloneSpirv-None-07321] Workgroup Memory Scope is limited to MeshNV, TaskNV, MeshEXT, TaskEXT, TessellationControl, and GLCompute execution model
+[VUID-StandaloneSpirv-None-07321] Workgroup Memory Scope is limited to MeshNV, TaskNV, MeshEXT, TaskEXT, TessellationControl, and GLCompute execution model
+
+  %main = OpFunction %void None %2

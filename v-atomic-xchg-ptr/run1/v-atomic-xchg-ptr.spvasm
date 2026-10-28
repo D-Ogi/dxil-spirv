@@ -1,0 +1,172 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 138
+; Schema: 0
+OpCapability Shader
+OpCapability Int64
+OpCapability Int64Atomics
+OpCapability ImageBuffer
+OpCapability VulkanMemoryModel
+OpMemoryModel Logical Vulkan
+OpEntryPoint GLCompute %3 "main" %8 %13 %16 %20 %23
+OpExecutionMode %3 LocalSize 1 1 1
+OpName %3 "main"
+OpName %30 "UDiv"
+OpName %28 "num"
+OpName %29 "den"
+OpName %71 "CmpXchgResult"
+OpDecorate %8 DescriptorSet 0
+OpDecorate %8 Binding 0
+OpDecorate %8 NonReadable
+OpDecorate %23 BuiltIn LocalInvocationIndex
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpTypeImage %5 Buffer 0 0 0 2 R32ui
+%7 = OpTypePointer UniformConstant %6
+%8 = OpVariable %7 UniformConstant
+%9 = OpConstant %5 256
+%10 = OpTypeFloat 32
+%11 = OpTypeArray %10 %9
+%12 = OpTypePointer Workgroup %11
+%13 = OpVariable %12 Workgroup
+%14 = OpTypeArray %5 %9
+%15 = OpTypePointer Workgroup %14
+%16 = OpVariable %15 Workgroup
+%17 = OpTypeInt 64 0
+%18 = OpTypeArray %17 %9
+%19 = OpTypePointer Workgroup %18
+%20 = OpVariable %19 Workgroup
+%21 = OpConstant %5 0
+%22 = OpTypePointer Input %5
+%23 = OpVariable %22 Input
+%27 = OpTypeFunction %5 %5 %5
+%32 = OpConstant %5 4294967295
+%35 = OpTypeBool
+%37 = OpConstantNull %5
+%44 = OpTypePointer Workgroup %10
+%49 = OpConstant %5 2
+%50 = OpTypePointer Workgroup %5
+%53 = OpTypePointer Workgroup %17
+%71 = OpTypeStruct %5 %35
+%97 = OpConstant %5 1065353216
+%99 = OpConstant %5 1073741824
+%122 = OpConstant %5 4
+%127 = OpTypeVector %5 4
+%131 = OpConstant %5 1
+%136 = OpConstant %5 3
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %137
+%137 = OpLabel
+%24 = OpLoad %5 %23
+%25 = OpISub %5 %21 %21
+%26 = OpConvertUToF %10 %25
+%40 = OpFunctionCall %5 %30 %21 %21
+%41 = OpUConvert %17 %21
+%42 = OpUConvert %17 %21
+%43 = OpIMul %17 %42 %41
+%45 = OpAccessChain %44 %13 %21
+%46 = OpBitcast %5 %26
+%47 = OpCopyObject %44 %45
+%48 = OpAtomicExchange %5 %47 %49 %21 %46
+%51 = OpAccessChain %50 %16 %21
+%52 = OpAtomicExchange %5 %51 %49 %21 %40
+%54 = OpAccessChain %53 %20 %21
+%55 = OpAtomicExchange %17 %54 %49 %21 %43
+%56 = OpConvertSToF %10 %40
+%57 = OpBitcast %5 %56
+%58 = OpAtomicExchange %5 %47 %49 %21 %57
+%59 = OpAtomicExchange %5 %47 %49 %21 %46
+%60 = OpBitcast %10 %59
+%61 = OpConvertFToS %5 %60
+%62 = OpAtomicExchange %5 %47 %49 %21 %57
+%63 = OpConvertFToU %5 %26
+%64 = OpAtomicExchange %5 %51 %49 %21 %63
+%65 = OpConvertFToS %17 %26
+%66 = OpAtomicExchange %17 %54 %49 %21 %65
+%67 = OpConvertSToF %10 %66
+%68 = OpBitcast %5 %67
+%69 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %68 %46
+%70 = OpIEqual %35 %69 %46
+%72 = OpCompositeConstruct %71 %69 %70
+%73 = OpConvertSToF %10 %61
+%74 = OpBitcast %5 %73
+%75 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %74 %57
+%76 = OpIEqual %35 %75 %57
+%77 = OpCompositeConstruct %71 %75 %76
+%78 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %74 %46
+%79 = OpIEqual %35 %78 %46
+%80 = OpCompositeConstruct %71 %78 %79
+%81 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %68 %57
+%82 = OpIEqual %35 %81 %57
+%83 = OpCompositeConstruct %71 %81 %82
+%84 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %68 %46
+%85 = OpIEqual %35 %84 %46
+%86 = OpCompositeConstruct %71 %84 %85
+%87 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %74 %57
+%88 = OpIEqual %35 %87 %57
+%89 = OpCompositeConstruct %71 %87 %88
+%90 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %74 %46
+%91 = OpIEqual %35 %90 %46
+%92 = OpCompositeConstruct %71 %90 %91
+%93 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %68 %57
+%94 = OpIEqual %35 %93 %57
+%95 = OpCompositeConstruct %71 %93 %94
+%96 = OpAtomicExchange %5 %47 %49 %21 %97
+%98 = OpAtomicExchange %5 %47 %49 %21 %99
+%100 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %99 %97
+%101 = OpIEqual %35 %100 %97
+%102 = OpCompositeConstruct %71 %100 %101
+%103 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %99 %57
+%104 = OpIEqual %35 %103 %57
+%105 = OpCompositeConstruct %71 %103 %104
+%106 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %68 %97
+%107 = OpIEqual %35 %106 %97
+%108 = OpCompositeConstruct %71 %106 %107
+%109 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %99 %97
+%110 = OpIEqual %35 %109 %97
+%111 = OpCompositeConstruct %71 %109 %110
+%112 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %74 %97
+%113 = OpIEqual %35 %112 %97
+%114 = OpCompositeConstruct %71 %112 %113
+%115 = OpAtomicCompareExchange %5 %47 %49 %21 %21 %99 %74
+%116 = OpIEqual %35 %115 %74
+%117 = OpCompositeConstruct %71 %115 %116
+%118 = OpCompositeExtract %5 %117 0
+%119 = OpBitcast %10 %118
+%120 = OpLoad %6 %8
+%121 = OpIMul %5 %24 %122
+%123 = OpBitcast %5 %119
+%124 = OpBitcast %5 %119
+%125 = OpBitcast %5 %119
+%126 = OpBitcast %5 %119
+%128 = OpCompositeConstruct %127 %123 %123 %123 %123
+OpImageWrite %120 %121 %128 NonPrivateTexel
+%129 = OpCompositeConstruct %127 %124 %124 %124 %124
+%130 = OpIAdd %5 %121 %131
+OpImageWrite %120 %130 %129 NonPrivateTexel
+%132 = OpCompositeConstruct %127 %125 %125 %125 %125
+%133 = OpIAdd %5 %121 %49
+OpImageWrite %120 %133 %132 NonPrivateTexel
+%134 = OpCompositeConstruct %127 %126 %126 %126 %126
+%135 = OpIAdd %5 %121 %136
+OpImageWrite %120 %135 %134 NonPrivateTexel
+OpReturn
+OpFunctionEnd
+%30 = OpFunction %5 None %27
+%28 = OpFunctionParameter %5
+%29 = OpFunctionParameter %5
+%31 = OpLabel
+%36 = OpIEqual %35 %29 %37
+OpSelectionMerge %34 Flatten
+OpBranchConditional %36 %34 %33
+%33 = OpLabel
+%38 = OpUDiv %5 %28 %29
+OpBranch %34
+%34 = OpLabel
+%39 = OpPhi %5 %32 %31 %38 %33
+OpReturnValue %39
+OpFunctionEnd
+

@@ -1,0 +1,2 @@
+rc=1 error: line 67: Vector access is out of bounds, vector size is 4, but access index is 4
+  %45 = OpCompositeExtract %uint %40 4

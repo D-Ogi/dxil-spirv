@@ -1,0 +1,2 @@
+rc=1 error: line 145: [VUID-Layer-Layer-04272] Vulkan spec allows BuiltIn Layer to be used only with Vertex, TessellationEvaluation, Geometry, or Fragment execution models. ID <81> (OpAccessChain) is referencing ID <27> (OpVariable) which is decorated with BuiltIn Layer in function <53> called with execution model TessellationControl.
+  %81 = OpAccessChain %_ptr_Input_uint %SV_RenderTargetArrayIndex %59

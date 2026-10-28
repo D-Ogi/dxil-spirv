@@ -1,0 +1,95 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 62
+; Schema: 0
+OpCapability Shader
+OpCapability SparseResidency
+OpCapability VulkanMemoryModel
+OpCapability PhysicalStorageBufferAddresses
+OpExtension "SPV_KHR_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64 Vulkan
+OpEntryPoint GLCompute %3 "main" %9 %16
+OpExecutionMode %3 LocalSize 64 1 1
+OpName %3 "main"
+OpName %7 "RootConstants"
+OpName %9 "registers"
+OpName %25 "ByteAddressMask"
+OpName %23 "index"
+OpName %24 "stride"
+OpName %35 "PhysicalPointerFloat4Array"
+OpMemberName %35 0 "value"
+OpDecorate %7 Block
+OpMemberDecorate %7 0 Offset 0
+OpDecorate %16 BuiltIn GlobalInvocationId
+OpDecorate %34 ArrayStride 16
+OpMemberDecorate %35 0 Offset 0
+OpDecorate %35 Block
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpTypeVector %5 2
+%7 = OpTypeStruct %6
+%8 = OpTypePointer PushConstant %7
+%9 = OpVariable %8 PushConstant
+%10 = OpTypePointer PushConstant %6
+%12 = OpConstant %5 0
+%14 = OpTypeVector %5 3
+%15 = OpTypePointer Input %14
+%16 = OpVariable %15 Input
+%17 = OpTypePointer Input %5
+%21 = OpConstant %5 4
+%22 = OpTypeFunction %5 %5 %5
+%28 = OpConstant %5 4294967295
+%31 = OpConstant %5 16
+%32 = OpTypeFloat 32
+%33 = OpTypeVector %32 4
+%34 = OpTypeRuntimeArray %33
+%35 = OpTypeStruct %34
+%36 = OpTypePointer PhysicalStorageBuffer %35
+%38 = OpTypePointer PhysicalStorageBuffer %33
+%46 = OpTypeBool
+%49 = OpConstant %32 0
+%54 = OpConstant %5 1024
+%56 = OpConstant %5 64
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %61
+%61 = OpLabel
+%11 = OpAccessChain %10 %9 %12
+%13 = OpLoad %6 %11
+%18 = OpAccessChain %17 %16 %12
+%19 = OpLoad %5 %18
+%20 = OpShiftLeftLogical %5 %19 %21
+%30 = OpFunctionCall %5 %25 %19 %31
+%37 = OpBitcast %36 %13
+%39 = OpInBoundsAccessChain %38 %37 %12 %30
+%40 = OpLoad %33 %39 Aligned|NonPrivatePointer 4
+%41 = OpCompositeExtract %32 %40 0
+%42 = OpCompositeExtract %32 %40 1
+%43 = OpCompositeExtract %32 %40 2
+%44 = OpCompositeExtract %32 %40 3
+%45 = OpCompositeExtract %5 %40 4
+%47 = OpImageSparseTexelsResident %46 %45
+%48 = OpSelect %32 %47 %41 %49
+%50 = OpSelect %32 %47 %42 %49
+%51 = OpSelect %32 %47 %43 %49
+%52 = OpSelect %32 %47 %44 %49
+%53 = OpIAdd %5 %20 %54
+%55 = OpIAdd %5 %19 %56
+%57 = OpFunctionCall %5 %25 %55 %31
+%58 = OpBitcast %36 %13
+%59 = OpInBoundsAccessChain %38 %58 %12 %57
+%60 = OpCompositeConstruct %33 %48 %50 %51 %52
+OpStore %59 %60 Aligned|NonPrivatePointer 4
+OpReturn
+OpFunctionEnd
+%25 = OpFunction %5 None %22
+%23 = OpFunctionParameter %5
+%24 = OpFunctionParameter %5
+%26 = OpLabel
+%27 = OpUDiv %5 %28 %24
+%29 = OpBitwiseAnd %5 %23 %27
+OpReturnValue %29
+OpFunctionEnd
+

@@ -1,0 +1,1 @@
+rc=1 error: line 13: End of input reached while decoding OpDecorate starting at word 54: expected more operands after 3 words.

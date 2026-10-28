@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T lib_6_3 -Fo lib-unbound-cbv.dxil lib-unbound-cbv.hlsl
+dxil-spirv lib-unbound-cbv.dxil --entry main --asm --output lib-unbound-cbv.spvasm
+dxil-spirv lib-unbound-cbv.dxil --entry main --output lib-unbound-cbv.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout lib-unbound-cbv.spv

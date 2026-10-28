@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T cs_6_0 -E main -Fo indexfold-orxor-ssbo.dxil indexfold-orxor.hlsl
+dxil-spirv indexfold-orxor-ssbo.dxil --ssbo-srv --ssbo-uav --asm --output indexfold-orxor-ssbo.spvasm
+dxil-spirv indexfold-orxor-ssbo.dxil --ssbo-srv --ssbo-uav --output indexfold-orxor-ssbo.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout indexfold-orxor-ssbo.spv

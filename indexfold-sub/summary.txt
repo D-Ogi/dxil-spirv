@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 3bcd6c7136c2c103 asm sha 463b6fba83c8d816 val rc=0 
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 3bcd6c7136c2c103 asm sha 463b6fba83c8d816 val rc=0 
+identical spv: True

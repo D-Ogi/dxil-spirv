@@ -1,0 +1,94 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 63
+; Schema: 0
+OpCapability Shader
+OpCapability ImageBuffer
+OpCapability VulkanMemoryModel
+OpCapability DemoteToHelperInvocation
+OpExtension "SPV_EXT_demote_to_helper_invocation"
+OpMemoryModel Logical Vulkan
+OpEntryPoint GLCompute %3 "main" %8 %15 %19 %21
+OpExecutionMode %3 LocalSize 14 12 3
+OpName %3 "main"
+OpName %13 ""
+OpDecorate %8 DescriptorSet 0
+OpDecorate %8 Binding 0
+OpDecorate %8 NonReadable
+OpDecorate %12 ArrayStride 16
+OpMemberDecorate %13 0 Offset 0
+OpDecorate %13 Block
+OpDecorate %15 DescriptorSet 0
+OpDecorate %15 Binding 0
+OpDecorate %21 BuiltIn LocalInvocationIndex
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpTypeImage %5 Buffer 0 0 0 2 R32ui
+%7 = OpTypePointer UniformConstant %6
+%8 = OpVariable %7 UniformConstant
+%9 = OpConstant %5 1
+%10 = OpTypeFloat 32
+%11 = OpTypeVector %10 4
+%12 = OpTypeArray %11 %9
+%13 = OpTypeStruct %12
+%14 = OpTypePointer Uniform %13
+%15 = OpVariable %14 Uniform
+%16 = OpTypeArray %5 %9
+%17 = OpConstantNull %16
+%18 = OpTypePointer Private %16
+%19 = OpVariable %18 Private %17
+%20 = OpTypePointer Input %5
+%21 = OpVariable %20 Input
+%23 = OpConstant %5 0
+%24 = OpTypePointer Uniform %11
+%31 = OpTypeBool
+%33 = OpConstant %10 0
+%34 = OpConstant %10 1
+%40 = OpTypePointer Private %5
+%45 = OpConstant %5 4
+%50 = OpTypeVector %5 4
+%56 = OpConstant %5 2
+%59 = OpConstant %5 3
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %62
+%62 = OpLabel
+%22 = OpLoad %5 %21
+%25 = OpAccessChain %24 %15 %23 %23
+%26 = OpLoad %11 %25
+%27 = OpCompositeExtract %10 %26 0
+%28 = OpCompositeExtract %10 %26 1
+%29 = OpCompositeExtract %10 %26 2
+%30 = OpCompositeExtract %10 %26 3
+%32 = OpIsHelperInvocationEXT %31
+%35 = OpSelect %10 %32 %34 %33
+%36 = OpFAdd %10 %27 %35
+%37 = OpFAdd %10 %28 %35
+%38 = OpFAdd %10 %29 %35
+%39 = OpFAdd %10 %30 %35
+%41 = OpAccessChain %40 %19 %23
+%42 = OpLoad %5 %41
+%43 = OpLoad %6 %8
+%44 = OpIMul %5 %22 %45
+%46 = OpBitcast %5 %36
+%47 = OpBitcast %5 %37
+%48 = OpBitcast %5 %38
+%49 = OpBitcast %5 %39
+%51 = OpCompositeConstruct %50 %46 %46 %46 %46
+OpImageWrite %43 %44 %51 NonPrivateTexel
+%52 = OpCompositeConstruct %50 %47 %47 %47 %47
+%53 = OpIAdd %5 %44 %9
+OpImageWrite %43 %53 %52 NonPrivateTexel
+%54 = OpCompositeConstruct %50 %48 %48 %48 %48
+%55 = OpIAdd %5 %44 %56
+OpImageWrite %43 %55 %54 NonPrivateTexel
+%57 = OpCompositeConstruct %50 %49 %49 %49 %49
+%58 = OpIAdd %5 %44 %59
+OpImageWrite %43 %58 %57 NonPrivateTexel
+%60 = OpAccessChain %40 %19 %23
+%61 = OpLoad %5 %60
+OpReturn
+OpFunctionEnd
+

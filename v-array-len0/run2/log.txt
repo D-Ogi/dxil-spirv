@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 23: OpTypeArray Length <id> '6[%uint_0]' default value must be at least 1: found 0
+  %_arr_v4float_uint_0 = OpTypeArray %v4float %uint_0

@@ -1,0 +1,93 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             <build>
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.015 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29617.1000 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+CommandLine: <build>\dxil-spirv.exe c2-rayquery-pix\run1\c2-rayquery-pix.dxil --output c2-rayquery-pix\run1\cdb.spv
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             <build>
+Symbol search path is: <build>
+Executable search path is: 
+
++------------------------------------------------------------------------+
+| This target supports Hardware-enforced Stack Protection. A HW based    |
+| "Shadow Stack" may be available to assist in debugging and analysis.   |
+| See aka.ms/userhsp for more info.                                      |
+|                                                                        |
+| dps @ssp                                                               |
+|                                                                        |
++------------------------------------------------------------------------+
+
+ModLoad: 00007ff6`47da0000 00007ff6`4842c000   dxil-spirv.exe
+ModLoad: 00007ffc`6ae40000 00007ffc`6b0a8000   ntdll.dll
+ModLoad: 00007ffc`69990000 00007ffc`69a5b000   C:\WINDOWS\System32\KERNEL32.DLL
+ModLoad: 00007ffc`68110000 00007ffc`68511000   C:\WINDOWS\System32\KERNELBASE.dll
+ModLoad: 00007ffc`68930000 00007ffc`68a7c000   C:\WINDOWS\System32\ucrtbase.dll
+ModLoad: 00007ffb`d0220000 00007ffb`d0592000   <build>\dxil-spirv-c-shared.dll
+ModLoad: 00007ffc`46590000 00007ffc`4662d000   C:\WINDOWS\SYSTEM32\MSVCP140.dll
+ModLoad: 00007ffc`46580000 00007ffc`4658c000   C:\WINDOWS\SYSTEM32\VCRUNTIME140_1.dll
+ModLoad: 00007ffc`46630000 00007ffc`4665c000   C:\WINDOWS\SYSTEM32\VCRUNTIME140.dll
+[ERROR]: Invalid type ID in cast<T>.
+(d0d8.7724): Security check failure or stack buffer overrun - code c0000409 (!!! second chance !!!)
+Subcode: 0x7 FAST_FAIL_FATAL_APP_EXIT 
+ucrtbase!abort+0x4e:
+00007ffc`689d527e cd29            int     29h
+0:000> cdb: Reading initial command '.ecxr; kn 30; q'
+Unable to get exception context, HRESULT 0x8000FFFF
+ # Child-SP          RetAddr               Call Site
+00 00000050`32cf9130 00007ffc`689f218e     ucrtbase!abort+0x4e
+*** WARNING: Unable to verify checksum for <build>\dxil-spirv-c-shared.dll
+01 00000050`32cf9160 00007ffb`d029d3f2     ucrtbase!terminate+0x1e
+02 00000050`32cf9190 00007ffb`d0336d9b     dxil_spirv_c_shared!LLVMBC::cast<LLVMBC::CallInst>+0x102 [<dxil-spirv>\bc\cast.hpp @ 142]
+03 00000050`32cfa1d0 00007ffb`d0337994     dxil_spirv_c_shared!dxil_spv::build_ray_query_object+0xcb [<dxil-spirv>\opcodes\dxil\dxil_ray_tracing.cpp @ 437]
+04 00000050`32cfa220 00007ffb`d031792d     dxil_spirv_c_shared!dxil_spv::emit_ray_query_get_value_instruction+0x54 [<dxil-spirv>\opcodes\dxil\dxil_ray_tracing.cpp @ 569]
+05 00000050`32cfa290 00007ffb`d0314790     dxil_spirv_c_shared!dxil_spv::emit_ray_query_get_value_instruction<6023,1,0>+0x1d [<dxil-spirv>\opcodes\dxil\dxil_ray_tracing.hpp @ 88]
+06 00000050`32cfa2c0 00007ffb`d028e6c9     dxil_spirv_c_shared!dxil_spv::emit_dxil_instruction+0x80 [<dxil-spirv>\opcodes\opcodes_dxil_builtins.cpp @ 481]
+07 00000050`32cfb310 00007ffb`d02947ae     dxil_spirv_c_shared!dxil_spv::Converter::Impl::emit_instruction+0x1d9 [<dxil-spirv>\dxil_converter.cpp @ 6415]
+08 00000050`32cfb370 00007ffb`d0273f1e     dxil_spirv_c_shared!dxil_spv::Converter::Impl::convert_function+0x36e [<dxil-spirv>\dxil_converter.cpp @ 8471]
+09 00000050`32cfc4a0 00007ffb`d0223714     dxil_spirv_c_shared!dxil_spv::Converter::Impl::convert_entry_point+0x8fe [<dxil-spirv>\dxil_converter.cpp @ 9130]
+*** WARNING: Unable to verify checksum for dxil-spirv.exe
+0a 00000050`32cfd590 00007ff6`47da3e74     dxil_spirv_c_shared!dxil_spv_converter_run+0x2c4 [<dxil-spirv>\dxil_spirv_c.cpp @ 800]
+0b 00000050`32cfe6a0 00007ff6`48235f24     dxil_spirv!main+0x2e74 [<dxil-spirv>\dxil_spirv.cpp @ 1415]
+0c (Inline Function) --------`--------     dxil_spirv!invoke_main+0x22 [D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl @ 78]
+0d 00000050`32cffc80 00007ffc`699bdda7     dxil_spirv!__scrt_common_main_seh+0x10c [D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl @ 288]
+0e 00000050`32cffcc0 00007ffc`6aebee4c     KERNEL32!BaseThreadInitThunk+0x17
+0f 00000050`32cffcf0 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+quit:
+NatVis script unloaded from '<windbg>\Visualizers\atlmfc.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\concurrency.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\stl.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\windows.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\winrt.natvis'
+[ERROR]: Invalid type ID in cast<T>.

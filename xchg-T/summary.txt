@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 1c1c9abc1676bc9a asm sha 6ea030f7286e4738 val rc=1 error: line 37: AtomicExchange: expected Value to be of type Result Type
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 1c1c9abc1676bc9a asm sha 6ea030f7286e4738 val rc=1 error: line 37: AtomicExchange: expected Value to be of type Result Type
+identical spv: True

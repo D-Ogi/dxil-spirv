@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 67: Vector access is out of bounds, vector size is 4, but access index is 4
+  %45 = OpCompositeExtract %uint %40 4

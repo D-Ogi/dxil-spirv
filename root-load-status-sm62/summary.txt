@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 3d85f027d0f5a377 asm sha 2ffe6f07c3e3efe0 val rc=1 error: line 67: Vector access is out of bounds, vector size is 4, but access index is 4
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 3d85f027d0f5a377 asm sha 2ffe6f07c3e3efe0 val rc=1 error: line 67: Vector access is out of bounds, vector size is 4, but access index is 4
+identical spv: True

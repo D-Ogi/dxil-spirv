@@ -1,0 +1,113 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 77
+; Schema: 0
+OpCapability Shader
+OpCapability SparseResidency
+OpCapability StorageImageWriteWithoutFormat
+OpCapability VulkanMemoryModel
+OpMemoryModel Logical Vulkan
+OpEntryPoint Fragment %3 "main" %8 %12 %13 %16
+OpExecutionMode %3 OriginUpperLeft
+OpName %3 "main"
+OpName %12 "A"
+OpName %13 "B"
+OpName %16 "SV_Target"
+OpName %37 "SparseTexel"
+OpName %46 ""
+OpDecorate %8 DescriptorSet 0
+OpDecorate %8 Binding 3
+OpDecorate %12 Flat
+OpDecorate %12 Location 0
+OpDecorate %13 Flat
+OpDecorate %13 Location 0
+OpDecorate %13 Component 2
+OpDecorate %16 Location 0
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeFloat 32
+%6 = OpTypeImage %5 2D 0 0 0 2 R32f
+%7 = OpTypePointer UniformConstant %6
+%8 = OpVariable %7 UniformConstant
+%9 = OpTypeInt 32 0
+%10 = OpTypeVector %9 2
+%11 = OpTypePointer Input %10
+%12 = OpVariable %11 Input
+%13 = OpVariable %11 Input
+%14 = OpTypeVector %5 4
+%15 = OpTypePointer Output %14
+%16 = OpVariable %15 Output
+%18 = OpTypePointer Input %9
+%20 = OpConstant %9 0
+%23 = OpConstant %9 1
+%35 = OpConstant %9 2
+%36 = OpConstant %9 26696
+%37 = OpTypeStruct %9 %14
+%46 = OpTypeStruct %5 %5 %5 %5 %9
+%53 = OpTypeBool
+%55 = OpConstant %5 0
+%56 = OpConstant %5 1
+%59 = OpConstant %5 2
+%70 = OpTypePointer Output %5
+%75 = OpConstant %9 3
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %76
+%76 = OpLabel
+%17 = OpLoad %6 %8
+%19 = OpAccessChain %18 %13 %20
+%21 = OpLoad %9 %19
+%22 = OpAccessChain %18 %13 %23
+%24 = OpLoad %9 %22
+%25 = OpAccessChain %18 %12 %20
+%26 = OpLoad %9 %25
+%27 = OpAccessChain %18 %12 %23
+%28 = OpLoad %9 %27
+%30 = OpCompositeConstruct %10 %21 %24
+%29 = OpImageRead %14 %17 %30 NonPrivateTexel
+%31 = OpCompositeExtract %5 %29 0
+%32 = OpCompositeExtract %5 %29 1
+%33 = OpCompositeExtract %5 %29 2
+%34 = OpCompositeExtract %5 %29 3
+OpMemoryBarrier %35 %36
+%39 = OpCompositeConstruct %10 %26 %28
+%38 = OpImageSparseRead %37 %17 %39 NonPrivateTexel
+%40 = OpCompositeExtract %9 %38 0
+%41 = OpCompositeExtract %14 %38 1
+%42 = OpCompositeExtract %5 %41 0
+%43 = OpCompositeExtract %5 %41 1
+%44 = OpCompositeExtract %5 %41 2
+%45 = OpCompositeExtract %5 %41 3
+%47 = OpCompositeConstruct %46 %42 %43 %44 %45 %40
+%48 = OpCompositeExtract %5 %47 0
+%49 = OpCompositeExtract %5 %47 1
+%50 = OpCompositeExtract %5 %47 2
+%51 = OpCompositeExtract %5 %47 3
+%52 = OpCompositeExtract %9 %47 4
+%54 = OpImageSparseTexelsResident %53 %52
+%57 = OpSelect %5 %54 %56 %55
+%58 = OpFMul %5 %57 %59
+%60 = OpFAdd %5 %48 %31
+%61 = OpFAdd %5 %60 %58
+%62 = OpFAdd %5 %49 %32
+%63 = OpFAdd %5 %62 %58
+%64 = OpFAdd %5 %50 %33
+%65 = OpFAdd %5 %64 %58
+%66 = OpFAdd %5 %51 %34
+%67 = OpFAdd %5 %66 %58
+OpMemoryBarrier %35 %36
+%68 = OpCompositeConstruct %10 %21 %24
+%69 = OpCompositeConstruct %14 %61 %63 %65 %67
+OpImageWrite %17 %68 %69 NonPrivateTexel
+%71 = OpAccessChain %70 %16 %20
+OpStore %71 %61
+%72 = OpAccessChain %70 %16 %23
+OpStore %72 %63
+%73 = OpAccessChain %70 %16 %35
+OpStore %73 %65
+%74 = OpAccessChain %70 %16 %75
+OpStore %74 %67
+OpReturn
+OpFunctionEnd
+

@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T lib_6_3 -DTYPE=float -Od -Fo v-decorate-trunc.dxil lib_skip_copy_in.hlsl
+dxil-spirv v-decorate-trunc.dxil  --asm --output v-decorate-trunc.spvasm
+dxil-spirv v-decorate-trunc.dxil  --output v-decorate-trunc.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout v-decorate-trunc.spv

@@ -1,0 +1,2 @@
+rc=1 error: line 134: Result type (OpTypeVector) does not match the type that results from indexing into the composite (OpTypeFloat).
+  %57 = OpCompositeExtract %v4float %56 0

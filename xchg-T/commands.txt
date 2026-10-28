@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T cs_6_6 -E main -DUSE_T=1 -Fo xchg-T.dxil xchg.hlsl
+dxil-spirv xchg-T.dxil  --asm --output xchg-T.spvasm
+dxil-spirv xchg-T.dxil  --output xchg-T.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout xchg-T.spv

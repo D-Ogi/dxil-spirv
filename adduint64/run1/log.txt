@@ -1,0 +1,11 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 46: Expected Result Type struct member types to be identical: IAddCarry
+  %32 = OpIAddCarry %_ %28 %uint_4294967295

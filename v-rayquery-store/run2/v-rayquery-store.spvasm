@@ -1,0 +1,98 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 63
+; Schema: 0
+OpCapability Shader
+OpCapability RayQueryKHR
+OpCapability RayTraversalPrimitiveCullingKHR
+OpCapability VulkanMemoryModel
+OpExtension "SPV_KHR_ray_query"
+OpMemoryModel Logical Vulkan
+OpEntryPoint Vertex %3 "main" %8 %11 %15 %17 %18 %19 %23 %45 %48 %50 %52 %55 %59
+OpName %3 "main"
+OpName %11 "IDX"
+OpName %15 "RAYDESC"
+OpName %17 "RAYDESC_1"
+OpName %18 "RAYDESC_2"
+OpName %19 "RAYDESC_3"
+OpDecorate %8 DescriptorSet 0
+OpDecorate %8 Binding 0
+OpDecorate %11 Location 0
+OpDecorate %15 Location 1
+OpDecorate %17 Location 2
+OpDecorate %18 Location 3
+OpDecorate %19 Location 4
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 1
+%6 = OpTypeAccelerationStructureKHR
+%7 = OpTypePointer UniformConstant %6
+%8 = OpVariable %7 UniformConstant
+%9 = OpTypeInt 32 0
+%10 = OpTypePointer Input %9
+%11 = OpVariable %10 Input
+%12 = OpTypeFloat 32
+%13 = OpTypeVector %12 3
+%14 = OpTypePointer Input %13
+%15 = OpVariable %14 Input
+%16 = OpTypePointer Input %12
+%17 = OpVariable %16 Input
+%18 = OpVariable %14 Input
+%19 = OpVariable %16 Input
+%20 = OpConstant %9 4
+%21 = OpTypeArray %9 %20
+%22 = OpTypePointer Private %21
+%23 = OpVariable %22 Private
+%27 = OpConstant %9 0
+%30 = OpConstant %9 1
+%33 = OpConstant %9 2
+%43 = OpTypeRayQueryKHR
+%44 = OpTypePointer Private %43
+%45 = OpVariable %44 Private
+%46 = OpTypePointer Private %9
+%48 = OpVariable %44 Private
+%50 = OpVariable %44 Private
+%52 = OpVariable %44 Private
+%54 = OpConstant %9 3
+%55 = OpVariable %44 Private
+%59 = OpVariable %44 Private
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %62
+%62 = OpLabel
+%24 = OpLoad %6 %8
+%25 = OpLoad %12 %19
+%26 = OpAccessChain %16 %18 %27
+%28 = OpLoad %12 %26
+%29 = OpAccessChain %16 %18 %30
+%31 = OpLoad %12 %29
+%32 = OpAccessChain %16 %18 %33
+%34 = OpLoad %12 %32
+%35 = OpLoad %12 %17
+%36 = OpAccessChain %16 %15 %27
+%37 = OpLoad %12 %36
+%38 = OpAccessChain %16 %15 %30
+%39 = OpLoad %12 %38
+%40 = OpAccessChain %16 %15 %33
+%41 = OpLoad %12 %40
+%42 = OpLoad %9 %11
+%47 = OpAccessChain %46 %23 %27
+OpStore %47 %45
+%49 = OpAccessChain %46 %23 %30
+OpStore %49 %48
+%51 = OpAccessChain %46 %23 %33
+OpStore %51 %50
+%53 = OpAccessChain %46 %23 %54
+OpStore %53 %52
+%56 = OpInBoundsAccessChain %46 %23 %42
+OpStore %56 %55
+%57 = OpCompositeConstruct %13 %37 %39 %41
+%58 = OpCompositeConstruct %13 %28 %31 %34
+OpRayQueryInitializeKHR %55 %24 %30 %33 %57 %35 %58 %25
+%60 = OpCompositeConstruct %13 %37 %39 %41
+%61 = OpCompositeConstruct %13 %28 %31 %34
+OpRayQueryInitializeKHR %59 %24 %54 %20 %60 %35 %61 %25
+OpReturn
+OpFunctionEnd
+

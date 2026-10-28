@@ -1,0 +1,85 @@
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             <build>
+
+************* Preparing the environment for Debugger Extensions Gallery repositories **************
+   ExtensionRepository : Implicit
+   UseExperimentalFeatureForNugetShare : true
+   AllowNugetExeUpdate : true
+   NonInteractiveNuget : true
+   AllowNugetMSCredentialProviderInstall : true
+   AllowParallelInitializationOfLocalRepositories : true
+
+   -- Configuring repositories
+      ----> Repository : LocalInstalled, Enabled: true
+      ----> Repository : UserExtensions, Enabled: true
+
+>>>>>>>>>>>>> Preparing the environment for Debugger Extensions Gallery repositories completed, duration 0.000 seconds
+
+************* Waiting for Debugger Extensions Gallery to Initialize **************
+
+>>>>>>>>>>>>> Waiting for Debugger Extensions Gallery to Initialize completed, duration 0.031 seconds
+   ----> Repository : UserExtensions, Enabled: true, Packages count: 0
+   ----> Repository : LocalInstalled, Enabled: true, Packages count: 46
+
+Microsoft (R) Windows Debugger Version 10.0.29617.1000 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+CommandLine: <build>\dxil-spirv.exe c1-lib-undef\run1\c1-lib-undef.dxil --entry test --output c1-lib-undef\run1\cdb.spv
+
+************* Path validation summary **************
+Response                         Time (ms)     Location
+OK                                             <build>
+Symbol search path is: <build>
+Executable search path is: 
+
++------------------------------------------------------------------------+
+| This target supports Hardware-enforced Stack Protection. A HW based    |
+| "Shadow Stack" may be available to assist in debugging and analysis.   |
+| See aka.ms/userhsp for more info.                                      |
+|                                                                        |
+| dps @ssp                                                               |
+|                                                                        |
++------------------------------------------------------------------------+
+
+ModLoad: 00007ff6`47da0000 00007ff6`4842c000   dxil-spirv.exe
+ModLoad: 00007ffc`6ae40000 00007ffc`6b0a8000   ntdll.dll
+ModLoad: 00007ffc`69990000 00007ffc`69a5b000   C:\WINDOWS\System32\KERNEL32.DLL
+ModLoad: 00007ffc`68110000 00007ffc`68511000   C:\WINDOWS\System32\KERNELBASE.dll
+ModLoad: 00007ffc`68930000 00007ffc`68a7c000   C:\WINDOWS\System32\ucrtbase.dll
+ModLoad: 00007ffc`46590000 00007ffc`4662d000   C:\WINDOWS\SYSTEM32\MSVCP140.dll
+ModLoad: 00007ffc`46630000 00007ffc`4665c000   C:\WINDOWS\SYSTEM32\VCRUNTIME140.dll
+ModLoad: 00007ffb`c04f0000 00007ffb`c0862000   <build>\dxil-spirv-c-shared.dll
+ModLoad: 00007ffc`46580000 00007ffc`4658c000   C:\WINDOWS\SYSTEM32\VCRUNTIME140_1.dll
+(ddd0.e5d0): Access violation - code c0000005 (first chance)
+First chance exceptions are reported before any exception handling.
+This exception may be expected and handled.
+*** WARNING: Unable to verify checksum for <build>\dxil-spirv-c-shared.dll
+dxil_spirv_c_shared!LLVMBC::Function::getEntryBlock+0x4:
+00007ffb`c05d1724 488b00          mov     rax,qword ptr [rax] ds:00000000`00000000=????????????????
+0:000> cdb: Reading initial command '.ecxr; kn 30; q'
+Unable to get exception context, HRESULT 0x8000FFFF
+ # Child-SP          RetAddr               Call Site
+00 000000e6`f476c628 00007ffb`c056829f     dxil_spirv_c_shared!LLVMBC::Function::getEntryBlock+0x4 [<dxil-spirv>\bc\function.cpp @ 70]
+01 000000e6`f476c630 00007ffb`c0543bc9     dxil_spirv_c_shared!dxil_spv::Converter::Impl::build_function_bb_visit_order+0x5f [<dxil-spirv>\dxil_converter.cpp @ 8313]
+02 000000e6`f476c6e0 00007ffb`c04f3714     dxil_spirv_c_shared!dxil_spv::Converter::Impl::convert_entry_point+0x5a9 [<dxil-spirv>\dxil_converter.cpp @ 9080]
+*** WARNING: Unable to verify checksum for dxil-spirv.exe
+03 000000e6`f476d7d0 00007ff6`47da3e74     dxil_spirv_c_shared!dxil_spv_converter_run+0x2c4 [<dxil-spirv>\dxil_spirv_c.cpp @ 800]
+04 000000e6`f476e8e0 00007ff6`48235f24     dxil_spirv!main+0x2e74 [<dxil-spirv>\dxil_spirv.cpp @ 1415]
+05 (Inline Function) --------`--------     dxil_spirv!invoke_main+0x22 [D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl @ 78]
+06 000000e6`f476fec0 00007ffc`699bdda7     dxil_spirv!__scrt_common_main_seh+0x10c [D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl @ 288]
+07 000000e6`f476ff00 00007ffc`6aebee4c     KERNEL32!BaseThreadInitThunk+0x17
+08 000000e6`f476ff30 00000000`00000000     ntdll!RtlUserThreadStart+0x2c
+quit:
+NatVis script unloaded from '<windbg>\Visualizers\atlmfc.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\concurrency.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\cpp_rest.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\ObjectiveC.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\stl.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Data.Json.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Devices.Geolocation.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Devices.Sensors.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\Windows.Media.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\windows.natvis'
+NatVis script unloaded from '<windbg>\Visualizers\winrt.natvis'

@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 2ab427b1aad83800 asm sha ef69307e45d8fa8a val rc=1 error: line 49: OpEntryPoint Entry Point <id> '3[%main]'s callgraph contains function <id> '3[%main]', which cannot be used with the current execution model:
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 2ab427b1aad83800 asm sha ef69307e45d8fa8a val rc=1 error: line 49: OpEntryPoint Entry Point <id> '3[%main]'s callgraph contains function <id> '3[%main]', which cannot be used with the current execution model:
+identical spv: True

@@ -1,0 +1,2 @@
+rc=1 error: line 45: [VUID-FrontFacing-FrontFacing-04231] According to the Vulkan spec BuiltIn FrontFacing variable needs to be a bool scalar. ID <23> (OpVariable) is not a bool scalar.
+  %SV_IsFrontFace = OpVariable %_ptr_Output_uint Output

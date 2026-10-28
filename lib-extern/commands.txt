@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T lib_6_3 -Fo lib-extern.dxil lib-extern.hlsl
+dxil-spirv lib-extern.dxil --entry main --asm --output lib-extern.spvasm
+dxil-spirv lib-extern.dxil --entry main --output lib-extern.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout lib-extern.spv

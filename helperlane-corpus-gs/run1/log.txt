@@ -1,0 +1,13 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+
+$ dxil-spirv rc=0 (0x00000000)
+
+
+$ spirv-val rc=1 error: line 51: OpEntryPoint Entry Point <id> '3[%main]'s callgraph contains function <id> '3[%main]', which cannot be used with the current execution model:
+OpIsHelperInvocationEXT requires Fragment execution model
+
+  %main = OpFunction %void None %2

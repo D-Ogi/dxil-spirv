@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe 1.9.2609
+spirv-val SPIRV-Tools 2026.3
+
+dxc -T vs_6_5 -O3 -E main -Fo c2-rayquery-pix.dxil TraceRayInlineSelectDebug.hlsl
+dxil-spirv c2-rayquery-pix.dxil  --asm --output c2-rayquery-pix.spvasm
+dxil-spirv c2-rayquery-pix.dxil  --output c2-rayquery-pix.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout c2-rayquery-pix.spv

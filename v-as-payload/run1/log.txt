@@ -1,0 +1,13 @@
+$ dxc rc=0
+
+
+$ dxil-spirv --asm rc=0 (0x00000000)
+
+[WARN]: Global variable address space cannot have initializer! Ignoring ...
+
+$ dxil-spirv rc=0 (0x00000000)
+
+[WARN]: Global variable address space cannot have initializer! Ignoring ...
+
+$ spirv-val rc=1 error: line 406: Payload must be the result of a OpVariable
+  OpEmitMeshTasksEXT %uint_1 %uint_1 %uint_1 %347

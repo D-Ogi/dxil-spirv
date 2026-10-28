@@ -1,0 +1,2 @@
+rc=1 error: line 56: Expected Result Type struct member types to be identical: IAddCarry
+  %37 = OpIAddCarry %_ %28 %17

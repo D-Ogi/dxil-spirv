@@ -1,0 +1,130 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 92
+; Schema: 0
+OpCapability Shader
+OpCapability Geometry
+OpCapability Tessellation
+OpCapability ShaderViewportIndexLayerEXT
+OpCapability VulkanMemoryModel
+OpExtension "SPV_EXT_shader_viewport_index_layer"
+OpMemoryModel Logical Vulkan
+OpEntryPoint TessellationEvaluation %3 "main" %11 %14 %16 %18 %22 %26 %29
+OpExecutionMode %3 Triangles
+OpName %3 "main"
+OpName %11 "SV_Position"
+OpName %14 "SV_RenderTargetArrayIndex"
+OpName %16 "SV_Position"
+OpName %18 "SV_RenderTargetArrayIndex"
+OpName %22 "SV_TessFactor"
+OpName %26 "SV_InsideTessFactor"
+OpDecorate %11 Location 0
+OpDecorate %14 Location 1
+OpDecorate %16 BuiltIn Position
+OpDecorate %18 BuiltIn Layer
+OpDecorate %22 BuiltIn TessLevelOuter
+OpDecorate %22 Patch
+OpDecorate %26 BuiltIn TessLevelInner
+OpDecorate %26 Patch
+OpDecorate %29 BuiltIn TessCoord
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeFloat 32
+%6 = OpTypeVector %5 4
+%7 = OpTypeInt 32 0
+%8 = OpConstant %7 3
+%9 = OpTypeArray %6 %8
+%10 = OpTypePointer Input %9
+%11 = OpVariable %10 Input
+%12 = OpTypeArray %7 %8
+%13 = OpTypePointer Input %12
+%14 = OpVariable %13 Input
+%15 = OpTypePointer Output %6
+%16 = OpVariable %15 Output
+%17 = OpTypePointer Output %7
+%18 = OpVariable %17 Output
+%19 = OpConstant %7 4
+%20 = OpTypeArray %5 %19
+%21 = OpTypePointer Input %20
+%22 = OpVariable %21 Input
+%23 = OpConstant %7 2
+%24 = OpTypeArray %5 %23
+%25 = OpTypePointer Input %24
+%26 = OpVariable %25 Input
+%27 = OpTypeVector %5 3
+%28 = OpTypePointer Input %27
+%29 = OpVariable %28 Input
+%30 = OpTypePointer Input %5
+%32 = OpConstant %7 0
+%35 = OpConstant %7 1
+%83 = OpTypePointer Input %7
+%86 = OpTypePointer Output %5
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %91
+%91 = OpLabel
+%31 = OpAccessChain %30 %29 %32
+%33 = OpLoad %5 %31
+%34 = OpAccessChain %30 %29 %35
+%36 = OpLoad %5 %34
+%37 = OpAccessChain %30 %29 %23
+%38 = OpLoad %5 %37
+%39 = OpAccessChain %30 %11 %32 %32
+%40 = OpLoad %5 %39
+%41 = OpAccessChain %30 %11 %32 %35
+%42 = OpLoad %5 %41
+%43 = OpAccessChain %30 %11 %32 %23
+%44 = OpLoad %5 %43
+%45 = OpAccessChain %30 %11 %32 %8
+%46 = OpLoad %5 %45
+%47 = OpFMul %5 %40 %33
+%48 = OpFMul %5 %42 %33
+%49 = OpFMul %5 %44 %33
+%50 = OpFMul %5 %46 %33
+%51 = OpAccessChain %30 %11 %35 %32
+%52 = OpLoad %5 %51
+%53 = OpAccessChain %30 %11 %35 %35
+%54 = OpLoad %5 %53
+%55 = OpAccessChain %30 %11 %35 %23
+%56 = OpLoad %5 %55
+%57 = OpAccessChain %30 %11 %35 %8
+%58 = OpLoad %5 %57
+%59 = OpFMul %5 %52 %36
+%60 = OpFMul %5 %54 %36
+%61 = OpFMul %5 %56 %36
+%62 = OpFMul %5 %58 %36
+%63 = OpFAdd %5 %59 %47
+%64 = OpFAdd %5 %60 %48
+%65 = OpFAdd %5 %61 %49
+%66 = OpFAdd %5 %62 %50
+%67 = OpAccessChain %30 %11 %23 %32
+%68 = OpLoad %5 %67
+%69 = OpAccessChain %30 %11 %23 %35
+%70 = OpLoad %5 %69
+%71 = OpAccessChain %30 %11 %23 %23
+%72 = OpLoad %5 %71
+%73 = OpAccessChain %30 %11 %23 %8
+%74 = OpLoad %5 %73
+%75 = OpFMul %5 %68 %38
+%76 = OpFMul %5 %70 %38
+%77 = OpFMul %5 %72 %38
+%78 = OpFMul %5 %74 %38
+%79 = OpFAdd %5 %63 %75
+%80 = OpFAdd %5 %64 %76
+%81 = OpFAdd %5 %65 %77
+%82 = OpFAdd %5 %66 %78
+%84 = OpAccessChain %83 %14 %32
+%85 = OpLoad %7 %84
+%87 = OpAccessChain %86 %16 %32
+OpStore %87 %79
+%88 = OpAccessChain %86 %16 %35
+OpStore %88 %80
+%89 = OpAccessChain %86 %16 %23
+OpStore %89 %81
+%90 = OpAccessChain %86 %16 %8
+OpStore %90 %82
+OpStore %18 %85
+OpReturn
+OpFunctionEnd
+

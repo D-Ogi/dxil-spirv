@@ -1,0 +1,2 @@
+rc=1 error: line 406: Payload must be the result of a OpVariable
+  OpEmitMeshTasksEXT %uint_1 %uint_1 %uint_1 %347

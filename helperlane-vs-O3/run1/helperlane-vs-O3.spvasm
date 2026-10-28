@@ -1,0 +1,40 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 21
+; Schema: 0
+OpCapability Shader
+OpCapability VulkanMemoryModel
+OpMemoryModel Logical Vulkan
+OpEntryPoint Vertex %3 "main" %8
+OpName %3 "main"
+OpName %8 "SV_Position"
+OpDecorate %8 BuiltIn Position
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeFloat 32
+%6 = OpTypeVector %5 4
+%7 = OpTypePointer Output %6
+%8 = OpVariable %7 Output
+%9 = OpTypePointer Output %5
+%11 = OpTypeInt 32 0
+%12 = OpConstant %11 0
+%13 = OpConstant %5 0
+%15 = OpConstant %11 1
+%17 = OpConstant %11 2
+%19 = OpConstant %11 3
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %20
+%20 = OpLabel
+%10 = OpAccessChain %9 %8 %12
+OpStore %10 %13
+%14 = OpAccessChain %9 %8 %15
+OpStore %14 %13
+%16 = OpAccessChain %9 %8 %17
+OpStore %16 %13
+%18 = OpAccessChain %9 %8 %19
+OpStore %18 %13
+OpReturn
+OpFunctionEnd
+

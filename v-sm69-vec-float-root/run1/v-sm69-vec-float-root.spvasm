@@ -1,0 +1,272 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 202
+; Schema: 0
+OpCapability Shader
+OpCapability SparseResidency
+OpCapability ImageBuffer
+OpCapability VulkanMemoryModel
+OpCapability PhysicalStorageBufferAddresses
+OpExtension "SPV_KHR_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64 Vulkan
+OpEntryPoint Vertex %3 "main" %9 %12 %13 %14 %15 %19
+OpName %3 "main"
+OpName %7 "RootConstants"
+OpName %9 "registers"
+OpName %19 "IX"
+OpName %30 "PhysicalPointerFloat4"
+OpMemberName %30 0 "value"
+OpName %34 "AddCarry"
+OpName %63 "PhysicalPointerFloat4NonWrite"
+OpMemberName %63 0 "value"
+OpName %106 "PhysicalPointerUintArray"
+OpMemberName %106 0 "value"
+OpName %115 "PhysicalPointerFloat4Array"
+OpMemberName %115 0 "value"
+OpName %134 "PhysicalPointerFloat4NonWriteArray"
+OpMemberName %134 0 "value"
+OpDecorate %7 Block
+OpMemberDecorate %7 0 Offset 0
+OpMemberDecorate %7 1 Offset 8
+OpMemberDecorate %7 2 Offset 16
+OpMemberDecorate %7 3 Offset 24
+OpDecorate %12 DescriptorSet 0
+OpDecorate %12 Binding 4
+OpDecorate %12 NonWritable
+OpDecorate %13 DescriptorSet 7
+OpDecorate %13 Binding 2
+OpDecorate %14 DescriptorSet 0
+OpDecorate %14 Binding 5
+OpDecorate %14 NonReadable
+OpDecorate %15 DescriptorSet 7
+OpDecorate %15 Binding 3
+OpDecorate %19 Location 0
+OpMemberDecorate %30 0 Offset 0
+OpDecorate %30 Block
+OpMemberDecorate %63 0 Offset 0
+OpDecorate %63 Block
+OpMemberDecorate %63 0 NonWritable
+OpDecorate %105 ArrayStride 4
+OpMemberDecorate %106 0 Offset 0
+OpDecorate %106 Block
+OpDecorate %114 ArrayStride 16
+OpMemberDecorate %115 0 Offset 0
+OpDecorate %115 Block
+OpDecorate %133 ArrayStride 16
+OpMemberDecorate %134 0 Offset 0
+OpDecorate %134 Block
+OpMemberDecorate %134 0 NonWritable
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpTypeVector %5 2
+%7 = OpTypeStruct %6 %6 %6 %6
+%8 = OpTypePointer PushConstant %7
+%9 = OpVariable %8 PushConstant
+%10 = OpTypeImage %5 Buffer 0 0 0 2 R32ui
+%11 = OpTypePointer UniformConstant %10
+%12 = OpVariable %11 UniformConstant
+%13 = OpVariable %11 UniformConstant
+%14 = OpVariable %11 UniformConstant
+%15 = OpVariable %11 UniformConstant
+%16 = OpConstant %5 3
+%17 = OpTypeArray %5 %16
+%18 = OpTypePointer Input %17
+%19 = OpVariable %18 Input
+%20 = OpTypePointer Input %5
+%22 = OpConstant %5 0
+%24 = OpTypePointer PushConstant %6
+%26 = OpConstant %5 2
+%28 = OpTypeFloat 32
+%29 = OpTypeVector %28 4
+%30 = OpTypeStruct %29
+%31 = OpTypePointer PhysicalStorageBuffer %30
+%34 = OpTypeStruct %5 %5
+%41 = OpTypePointer PhysicalStorageBuffer %29
+%45 = OpConstant %5 1
+%59 = OpTypeBool
+%63 = OpTypeStruct %29
+%64 = OpTypePointer PhysicalStorageBuffer %63
+%104 = OpConstant %5 25
+%105 = OpTypeRuntimeArray %5
+%106 = OpTypeStruct %105
+%107 = OpTypePointer PhysicalStorageBuffer %106
+%109 = OpTypePointer PhysicalStorageBuffer %5
+%114 = OpTypeRuntimeArray %29
+%115 = OpTypeStruct %114
+%116 = OpTypePointer PhysicalStorageBuffer %115
+%133 = OpTypeRuntimeArray %29
+%134 = OpTypeStruct %133
+%135 = OpTypePointer PhysicalStorageBuffer %134
+%159 = OpConstant %5 50
+%163 = OpTypePointer Image %5
+%166 = OpConstant %5 5
+%167 = OpConstant %5 4294967295
+%170 = OpConstant %5 4
+%171 = OpTypeVector %5 4
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+%111 = OpUndef %5
+OpBranch %201
+%201 = OpLabel
+%21 = OpAccessChain %20 %19 %22
+%23 = OpLoad %5 %21
+%25 = OpAccessChain %24 %9 %26
+%27 = OpLoad %6 %25
+%32 = OpCompositeExtract %5 %27 0
+%33 = OpCompositeExtract %5 %27 1
+%35 = OpIAddCarry %34 %32 %23
+%36 = OpCompositeExtract %5 %35 0
+%37 = OpCompositeExtract %5 %35 1
+%38 = OpIAdd %5 %33 %37
+%39 = OpCompositeConstruct %6 %36 %38
+%40 = OpBitcast %31 %39
+%42 = OpInBoundsAccessChain %41 %40 %22
+%43 = OpLoad %29 %42 Aligned|NonPrivatePointer 4
+%44 = OpAccessChain %20 %19 %45
+%46 = OpLoad %5 %44
+%47 = OpCompositeExtract %5 %27 0
+%48 = OpCompositeExtract %5 %27 1
+%49 = OpIAddCarry %34 %47 %46
+%50 = OpCompositeExtract %5 %49 0
+%51 = OpCompositeExtract %5 %49 1
+%52 = OpIAdd %5 %48 %51
+%53 = OpCompositeConstruct %6 %50 %52
+%54 = OpBitcast %31 %53
+%55 = OpInBoundsAccessChain %41 %54 %22
+%56 = OpLoad %29 %55 Aligned|NonPrivatePointer 4
+%57 = OpCompositeExtract %29 %56 0
+%58 = OpCompositeExtract %5 %56 1
+%60 = OpImageSparseTexelsResident %59 %58
+%61 = OpAccessChain %24 %9 %22
+%62 = OpLoad %6 %61
+%65 = OpCompositeExtract %5 %62 0
+%66 = OpCompositeExtract %5 %62 1
+%67 = OpIAddCarry %34 %65 %23
+%68 = OpCompositeExtract %5 %67 0
+%69 = OpCompositeExtract %5 %67 1
+%70 = OpIAdd %5 %66 %69
+%71 = OpCompositeConstruct %6 %68 %70
+%72 = OpBitcast %64 %71
+%73 = OpInBoundsAccessChain %41 %72 %22
+%74 = OpLoad %29 %73 Aligned 4
+%75 = OpCompositeExtract %5 %62 0
+%76 = OpCompositeExtract %5 %62 1
+%77 = OpIAddCarry %34 %75 %46
+%78 = OpCompositeExtract %5 %77 0
+%79 = OpCompositeExtract %5 %77 1
+%80 = OpIAdd %5 %76 %79
+%81 = OpCompositeConstruct %6 %78 %80
+%82 = OpBitcast %64 %81
+%83 = OpInBoundsAccessChain %41 %82 %22
+%84 = OpLoad %29 %83 Aligned 4
+%85 = OpCompositeExtract %29 %84 0
+%86 = OpCompositeExtract %5 %84 1
+%87 = OpImageSparseTexelsResident %59 %86
+%88 = OpFAdd %29 %57 %43
+%89 = OpFAdd %29 %88 %74
+%90 = OpFAdd %29 %89 %85
+%91 = OpCompositeExtract %5 %27 0
+%92 = OpCompositeExtract %5 %27 1
+%93 = OpIAddCarry %34 %91 %23
+%94 = OpCompositeExtract %5 %93 0
+%95 = OpCompositeExtract %5 %93 1
+%96 = OpIAdd %5 %92 %95
+%97 = OpCompositeConstruct %6 %94 %96
+%98 = OpBitcast %31 %97
+%99 = OpInBoundsAccessChain %41 %98 %22
+OpStore %99 %90 Aligned|NonPrivatePointer 4
+%100 = OpLogicalAnd %59 %60 %87
+%101 = OpSelect %5 %100 %45 %22
+%102 = OpAccessChain %24 %9 %26
+%103 = OpLoad %6 %102
+%108 = OpBitcast %107 %103
+%110 = OpInBoundsAccessChain %109 %108 %22 %104
+OpStore %110 %101 Aligned|NonPrivatePointer 4
+%112 = OpAccessChain %24 %9 %16
+%113 = OpLoad %6 %112
+%117 = OpBitcast %116 %113
+%118 = OpInBoundsAccessChain %41 %117 %22 %23
+%119 = OpLoad %29 %118 Aligned|NonPrivatePointer 4
+%120 = OpBitcast %116 %113
+%121 = OpInBoundsAccessChain %41 %120 %22 %46
+%122 = OpLoad %29 %121 Aligned|NonPrivatePointer 4
+%123 = OpAccessChain %20 %19 %26
+%124 = OpLoad %5 %123
+%125 = OpBitcast %116 %113
+%126 = OpInBoundsAccessChain %41 %125 %22 %124
+%127 = OpLoad %29 %126 Aligned|NonPrivatePointer 4
+%128 = OpCompositeExtract %29 %127 0
+%129 = OpCompositeExtract %5 %127 1
+%130 = OpImageSparseTexelsResident %59 %129
+%131 = OpAccessChain %24 %9 %45
+%132 = OpLoad %6 %131
+%136 = OpBitcast %135 %132
+%137 = OpInBoundsAccessChain %41 %136 %22 %23
+%138 = OpLoad %29 %137 Aligned 4
+%139 = OpBitcast %135 %132
+%140 = OpInBoundsAccessChain %41 %139 %22 %46
+%141 = OpLoad %29 %140 Aligned 4
+%142 = OpBitcast %135 %132
+%143 = OpInBoundsAccessChain %41 %142 %22 %124
+%144 = OpLoad %29 %143 Aligned 4
+%145 = OpCompositeExtract %29 %144 0
+%146 = OpCompositeExtract %5 %144 1
+%147 = OpImageSparseTexelsResident %59 %146
+%148 = OpFAdd %29 %122 %119
+%149 = OpFAdd %29 %148 %128
+%150 = OpFAdd %29 %149 %138
+%151 = OpFAdd %29 %150 %141
+%152 = OpFAdd %29 %151 %145
+%153 = OpBitcast %116 %113
+%154 = OpInBoundsAccessChain %41 %153 %22 %23
+OpStore %154 %152 Aligned|NonPrivatePointer 4
+%155 = OpLogicalAnd %59 %130 %147
+%156 = OpSelect %5 %155 %45 %22
+%157 = OpAccessChain %24 %9 %26
+%158 = OpLoad %6 %157
+%160 = OpBitcast %107 %158
+%161 = OpInBoundsAccessChain %109 %160 %22 %159
+OpStore %161 %156 Aligned|NonPrivatePointer 4
+%162 = OpLoad %10 %12
+%164 = OpImageTexelPointer %163 %13 %22 %22
+%165 = OpAtomicIAdd %5 %164 %166 %22 %167
+%168 = OpISub %5 %165 %45
+%169 = OpIMul %5 %168 %170
+%172 = OpImageRead %171 %162 %169 NonPrivateTexel
+%173 = OpCompositeExtract %5 %172 0
+%175 = OpIAdd %5 %169 %45
+%174 = OpImageRead %171 %162 %175 NonPrivateTexel
+%176 = OpCompositeExtract %5 %174 0
+%178 = OpIAdd %5 %169 %26
+%177 = OpImageRead %171 %162 %178 NonPrivateTexel
+%179 = OpCompositeExtract %5 %177 0
+%181 = OpIAdd %5 %169 %16
+%180 = OpImageRead %171 %162 %181 NonPrivateTexel
+%182 = OpCompositeExtract %5 %180 0
+%183 = OpCompositeConstruct %171 %173 %176 %179 %182
+%184 = OpBitcast %29 %183
+%185 = OpLoad %10 %14
+%186 = OpImageTexelPointer %163 %15 %22 %22
+%187 = OpAtomicIAdd %5 %186 %166 %22 %45
+%188 = OpIMul %5 %187 %170
+%189 = OpBitcast %171 %184
+%190 = OpCompositeExtract %5 %189 0
+%191 = OpCompositeExtract %5 %189 1
+%192 = OpCompositeExtract %5 %189 2
+%193 = OpCompositeExtract %5 %189 3
+%194 = OpCompositeConstruct %171 %190 %190 %190 %190
+OpImageWrite %185 %188 %194 NonPrivateTexel
+%195 = OpCompositeConstruct %171 %191 %191 %191 %191
+%196 = OpIAdd %5 %188 %45
+OpImageWrite %185 %196 %195 NonPrivateTexel
+%197 = OpCompositeConstruct %171 %192 %192 %192 %192
+%198 = OpIAdd %5 %188 %26
+OpImageWrite %185 %198 %197 NonPrivateTexel
+%199 = OpCompositeConstruct %171 %193 %193 %193 %193
+%200 = OpIAdd %5 %188 %16
+OpImageWrite %185 %200 %199 NonPrivateTexel
+OpReturn
+OpFunctionEnd
+

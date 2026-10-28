@@ -1,0 +1,88 @@
+; SPIR-V
+; Version: 1.6
+; Generator: Unknown(30017); 21022
+; Bound: 55
+; Schema: 0
+OpCapability Shader
+OpCapability SparseResidency
+OpCapability VulkanMemoryModel
+OpCapability PhysicalStorageBufferAddresses
+OpExtension "SPV_KHR_physical_storage_buffer"
+OpMemoryModel PhysicalStorageBuffer64 Vulkan
+OpEntryPoint GLCompute %3 "main" %9 %12
+OpExecutionMode %3 LocalSize 64 1 1
+OpName %3 "main"
+OpName %7 "RootConstants"
+OpName %9 "registers"
+OpName %25 "ByteAddressMask"
+OpName %23 "index"
+OpName %24 "stride"
+OpName %35 "PhysicalPointerFloat4Array"
+OpMemberName %35 0 "value"
+OpDecorate %7 Block
+OpMemberDecorate %7 0 Offset 0
+OpDecorate %12 BuiltIn GlobalInvocationId
+OpDecorate %34 ArrayStride 16
+OpMemberDecorate %35 0 Offset 0
+OpDecorate %35 Block
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpTypeVector %5 2
+%7 = OpTypeStruct %6
+%8 = OpTypePointer PushConstant %7
+%9 = OpVariable %8 PushConstant
+%10 = OpTypeVector %5 3
+%11 = OpTypePointer Input %10
+%12 = OpVariable %11 Input
+%13 = OpTypePointer Input %5
+%15 = OpConstant %5 0
+%18 = OpConstant %5 4
+%19 = OpTypePointer PushConstant %6
+%22 = OpTypeFunction %5 %5 %5
+%28 = OpConstant %5 4294967295
+%31 = OpConstant %5 16
+%32 = OpTypeFloat 32
+%33 = OpTypeVector %32 4
+%34 = OpTypeRuntimeArray %33
+%35 = OpTypeStruct %34
+%36 = OpTypePointer PhysicalStorageBuffer %35
+%38 = OpTypePointer PhysicalStorageBuffer %33
+%43 = OpTypeBool
+%46 = OpConstantNull %33
+%48 = OpConstant %5 1024
+%50 = OpConstant %5 64
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %54
+%54 = OpLabel
+%14 = OpAccessChain %13 %12 %15
+%16 = OpLoad %5 %14
+%17 = OpShiftLeftLogical %5 %16 %18
+%20 = OpAccessChain %19 %9 %15
+%21 = OpLoad %6 %20
+%30 = OpFunctionCall %5 %25 %16 %31
+%37 = OpBitcast %36 %21
+%39 = OpInBoundsAccessChain %38 %37 %15 %30
+%40 = OpLoad %33 %39 Aligned|NonPrivatePointer 4
+%41 = OpCompositeExtract %33 %40 0
+%42 = OpCompositeExtract %5 %40 1
+%44 = OpImageSparseTexelsResident %43 %42
+%45 = OpSelect %33 %44 %41 %46
+%47 = OpIAdd %5 %17 %48
+%49 = OpIAdd %5 %16 %50
+%51 = OpFunctionCall %5 %25 %49 %31
+%52 = OpBitcast %36 %21
+%53 = OpInBoundsAccessChain %38 %52 %15 %51
+OpStore %53 %45 Aligned|NonPrivatePointer 4
+OpReturn
+OpFunctionEnd
+%25 = OpFunction %5 None %22
+%23 = OpFunctionParameter %5
+%24 = OpFunctionParameter %5
+%26 = OpLabel
+%27 = OpUDiv %5 %28 %24
+%29 = OpBitwiseAnd %5 %23 %27
+OpReturnValue %29
+OpFunctionEnd
+

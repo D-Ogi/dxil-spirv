@@ -1,0 +1,3 @@
+run1: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 57d8ce6ea6160af7 asm sha a7fe5b7c94ce62f8 val rc=1 error: line 45: [VUID-FrontFacing-FrontFacing-04231] According to the Vulkan spec BuiltIn FrontFacing variable needs to be a bool scalar. ID <23> (OpVariable) is not a bool scalar.
+run2: dxil-spirv asm rc=0x00000000 bin rc=0x00000000 spv sha 57d8ce6ea6160af7 asm sha a7fe5b7c94ce62f8 val rc=1 error: line 45: [VUID-FrontFacing-FrontFacing-04231] According to the Vulkan spec BuiltIn FrontFacing variable needs to be a bool scalar. ID <23> (OpVariable) is not a bool scalar.
+identical spv: True

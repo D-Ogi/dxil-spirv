@@ -1,0 +1,2 @@
+rc=1 error: line 87: AtomicExchange: expected Value to be of type Result Type
+  %52 = OpAtomicExchange %float %50 %uint_5 %uint_0 %48

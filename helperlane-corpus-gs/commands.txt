@@ -1,0 +1,8 @@
+dxil-spirv upstream a7676a1f57f2a76b20b290492821e46d14dee749
+dxc dxc.exe
+spirv-val SPIRV-Tools 2026.3
+
+dxc -E gs -T gs_6_6 -Od -Fo helperlane-corpus-gs.dxil IsHelperLane.hlsl
+dxil-spirv helperlane-corpus-gs.dxil  --asm --output helperlane-corpus-gs.spvasm
+dxil-spirv helperlane-corpus-gs.dxil  --output helperlane-corpus-gs.spv
+spirv-val --target-env vulkan1.3 --scalar-block-layout helperlane-corpus-gs.spv
