@@ -1,3 +1,7 @@
+> **amdgpu-wddm fork.** This branch, `amdgpu-wddm/main`, is the dxil-spirv source of the DXIL to SPIR-V converter of the Direct3D 12 engine (the submodule of vkd3d-proton d0f1fab2) in the amdgpu-wddm tester release 0.7.216.105-tester.33: commit [`5ac4c07a`](https://github.com/D-Ogi/dxil-spirv/commit/5ac4c07a6118992af1891b9e5e67339fffd77066), plus this note. The driver project is https://github.com/D-Ogi/amdgpu-wddm. The other `amdgpu-wddm/*` branches hold work in progress and older release lines. The upstream project is https://github.com/HansKristian-Work/dxil-spirv; its README follows unchanged.
+
+---
+
 # dxil-spirv
 
 This project aims to provide translation of DXIL (SM 6.x) shaders to SPIR-V which can be used in the vkd3d project,
