@@ -216,6 +216,7 @@ bool extract_raw_buffer_access_split(const llvm::Value *index, unsigned stride,
 	bool scale_log2 = false;
 	bool bias_is_add = false;
 	bool bias_negate = false;
+	const llvm::Value *bias_expr = nullptr;
 
 	while (!scale && llvm::isa<llvm::BinaryOperator>(index))
 	{
@@ -227,7 +228,12 @@ bool extract_raw_buffer_access_split(const llvm::Value *index, unsigned stride,
 		              binop->getOpcode() == llvm::BinaryOperator::BinaryOps::Or ||
 		              binop->getOpcode() == llvm::BinaryOperator::BinaryOps::Xor))
 		{
-			if (const auto *const_lhs = llvm::dyn_cast<llvm::ConstantInt>(lhs))
+			// C - x is not x - C. Fold a Sub only when the constant is the right operand.
+			const llvm::ConstantInt *const_lhs = nullptr;
+			if (binop->getOpcode() != llvm::BinaryOperator::BinaryOps::Sub)
+				const_lhs = llvm::dyn_cast<llvm::ConstantInt>(lhs);
+
+			if (const_lhs)
 			{
 				bias = const_lhs;
 				index = rhs;
@@ -239,6 +245,8 @@ bool extract_raw_buffer_access_split(const llvm::Value *index, unsigned stride,
 			}
 			else
 				break;
+
+			bias_expr = binop;
 
 			// DXC tends to be emit shift + or in some cases.
 			// We can turn this back into mul + add in most cases.
@@ -280,6 +288,27 @@ bool extract_raw_buffer_access_split(const llvm::Value *index, unsigned stride,
 			break;
 	}
 
+	uint64_t scale_factor = 1;
+	if (scale)
+		scale_factor = scale->getUniqueInteger().getZExtValue();
+	if (scale_log2)
+		scale_factor = 1ull << scale_factor;
+
+	// An Or or Xor with a constant is equal to an add only if no bit of the constant can be set in the
+	// other operand. The low ctz(scale) bits of x * scale are always zero, so the fold is exact only if
+	// the constant is less than 1 << ctz(scale). Without a scale, no bit of x is known to be zero.
+	// If the fold is not exact, the complete Or or Xor is the dynamic index.
+	if (bias && !bias_is_add)
+	{
+		uint64_t known_zero_bits = (scale_factor ^ (scale_factor - 1)) >> 1;
+		if ((bias->getUniqueInteger().getZExtValue() & ~known_zero_bits) != 0)
+		{
+			index = bias_expr;
+			scale = nullptr;
+			bias = nullptr;
+		}
+	}
+
 	if (!scale && !bias)
 	{
 		// We cannot split anything, but we might be able to vectorize if the stride alone carries us.
@@ -294,22 +323,11 @@ bool extract_raw_buffer_access_split(const llvm::Value *index, unsigned stride,
 			return false;
 	}
 
-	uint64_t scale_factor = 1;
-	if (scale)
-		scale_factor = scale->getUniqueInteger().getZExtValue();
-	if (scale_log2)
-		scale_factor = 1ull << scale_factor;
-
 	int64_t bias_factor = 0;
 	if (bias)
 		bias_factor = bias->getUniqueInteger().getSExtValue();
 	if (bias_negate)
 		bias_factor = -bias_factor;
-
-	// If there is no bit overlap between scale_factor and bias_factor
-	// then the bitwise OR is equivalent to add.
-	if (!bias_is_add && (scale_factor & bias_factor) != 0)
-		return false;
 
 	scale_factor *= stride;
 	bias_factor *= stride;

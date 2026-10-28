@@ -1,0 +1,27 @@
+StructuredBuffer<uint> A : register(t0);
+ByteAddressBuffer R : register(t1);
+RWStructuredBuffer<uint> Out : register(u0);
+
+[numthreads(64, 1, 1)]
+void main(uint i : SV_DispatchThreadID)
+{
+	// Should not be folded. C - x is not x - C.
+	Out[0] = A[63 - i];
+	Out[1] = R.Load(1020 - (i << 2));
+
+	// Should not be folded. Bits of the constant can be set in the other operand.
+	Out[2] = A[i ^ 32];
+	Out[3] = A[i | 2];
+	Out[4] = A[(i * 12) | 16];
+	Out[5] = A[(i * 6) ^ 8];
+	Out[6] = R.Load(((i * 3) << 2) | 16);
+	Out[7] = R.Load((i << 2) ^ 64);
+
+	// Should be folded.
+	Out[8] = A[i + 4];
+	Out[9] = A[i - 4];
+	Out[10] = A[(i * 16) | 4];
+	Out[11] = A[(i << 4) ^ 8];
+	Out[12] = R.Load((i << 4) | 8);
+	Out[13] = R.Load((i * 12) - 8);
+}

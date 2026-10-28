@@ -109,12 +109,12 @@ void main()
             _204 = _203 == 0u;
             if (_204)
             {
-                float _240 = rayQueryGetIntersectionTEXT(_21, bool(0u));
-                imageStore(_13, int((gl_LocalInvocationIndex * 64u) + 6u), uvec4(floatBitsToUint(_240)));
-                vec2 _248 = rayQueryGetIntersectionBarycentricsEXT(_21, bool(0u));
-                imageStore(_13, int((gl_LocalInvocationIndex * 64u) + 7u), uvec4(floatBitsToUint(_248.y)));
-                bool _257 = rayQueryGetIntersectionFrontFaceEXT(_21, bool(0u));
-                imageStore(_12, int((gl_LocalInvocationIndex * 64u) + 8u), uvec4(_257 ? 100u : 10u));
+                float _236 = rayQueryGetIntersectionTEXT(_21, bool(0u));
+                imageStore(_13, int((gl_LocalInvocationIndex * 64u) + 6u), uvec4(floatBitsToUint(_236)));
+                vec2 _244 = rayQueryGetIntersectionBarycentricsEXT(_21, bool(0u));
+                imageStore(_13, int((gl_LocalInvocationIndex * 64u) + 7u), uvec4(floatBitsToUint(_244.y)));
+                bool _253 = rayQueryGetIntersectionFrontFaceEXT(_21, bool(0u));
+                imageStore(_12, int((gl_LocalInvocationIndex * 64u) + 8u), uvec4(_253 ? 100u : 10u));
                 rayQueryConfirmIntersectionEXT(_21);
                 _42 = _41 + 1u;
                 _45 = _44;
@@ -127,12 +127,12 @@ void main()
                 uint frontier_phi_9_6_ladder_2;
                 if (_203 == 1u)
                 {
-                    bool _435 = rayQueryGetIntersectionCandidateAABBOpaqueEXT(_21);
-                    uint _437 = uint(!_435);
+                    bool _423 = rayQueryGetIntersectionCandidateAABBOpaqueEXT(_21);
+                    uint _425 = uint(!_423);
                     rayQueryGenerateIntersectionEXT(_21, 0.5);
                     frontier_phi_9_6_ladder = _41;
-                    frontier_phi_9_6_ladder_1 = _437 + _44;
-                    frontier_phi_9_6_ladder_2 = (_437 ^ 1u) + _46;
+                    frontier_phi_9_6_ladder_1 = _425 + _44;
+                    frontier_phi_9_6_ladder_2 = (_425 ^ 1u) + _46;
                 }
                 else
                 {
@@ -148,8 +148,8 @@ void main()
             {
                 rayQueryTerminateEXT(_21);
             }
-            bool _459 = rayQueryProceedEXT(_21);
-            if (_459)
+            bool _444 = rayQueryProceedEXT(_21);
+            if (_444)
             {
                 _41 = _42;
                 _44 = _45;
@@ -174,106 +174,106 @@ void main()
         _208 = 0u;
     }
     uint _209 = rayQueryGetRayFlagsEXT(_21);
-    imageStore(_12, int((_205 | 9u) + 0u), uvec4(_209));
-    vec3 _215 = rayQueryGetWorldRayOriginEXT(_21);
-    imageStore(_13, int(_205 + 10u), uvec4(floatBitsToUint(_215.x)));
-    vec3 _223 = rayQueryGetWorldRayDirectionEXT(_21);
-    imageStore(_13, int((_205 | 11u) + 0u), uvec4(floatBitsToUint(_223.y)));
-    float _231 = rayQueryGetRayTMinEXT(_21);
-    imageStore(_13, int(_205 + 12u), uvec4(floatBitsToUint(_231)));
-    uint _237 = rayQueryGetIntersectionTypeEXT(_21, bool(1u));
-    if (!(_237 == 0u))
+    imageStore(_12, int(_205 | 9u), uvec4(_209));
+    vec3 _214 = rayQueryGetWorldRayOriginEXT(_21);
+    imageStore(_13, int(_205 | 10u), uvec4(floatBitsToUint(_214.x)));
+    vec3 _221 = rayQueryGetWorldRayDirectionEXT(_21);
+    imageStore(_13, int(_205 | 11u), uvec4(floatBitsToUint(_221.y)));
+    float _228 = rayQueryGetRayTMinEXT(_21);
+    imageStore(_13, int(_205 | 12u), uvec4(floatBitsToUint(_228)));
+    uint _233 = rayQueryGetIntersectionTypeEXT(_21, bool(1u));
+    if (!(_233 == 0u))
     {
-        uint _270 = rayQueryGetIntersectionInstanceIdEXT(_21, bool(1u));
-        imageStore(_12, int(_205 + 32u), uvec4(_270));
-        uint _276 = rayQueryGetIntersectionInstanceCustomIndexEXT(_21, bool(1u));
-        imageStore(_12, int((_205 | 33u) + 0u), uvec4(_276));
-        uint _282 = rayQueryGetIntersectionGeometryIndexEXT(_21, bool(1u));
-        imageStore(_12, int(_205 + 34u), uvec4(_282));
-        uint _288 = rayQueryGetIntersectionPrimitiveIndexEXT(_21, bool(1u));
-        imageStore(_12, int((_205 | 35u) + 0u), uvec4(_288));
-        vec3 _294 = rayQueryGetIntersectionObjectRayOriginEXT(_21, bool(1u));
-        imageStore(_13, int(_205 + 36u), uvec4(floatBitsToUint(_294.x)));
-        vec3 _302 = rayQueryGetIntersectionObjectRayDirectionEXT(_21, bool(1u));
-        imageStore(_13, int((_205 | 37u) + 0u), uvec4(floatBitsToUint(_302.y)));
-        uint _310 = rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(_21, bool(1u));
-        imageStore(_12, int(_205 + 38u), uvec4(_310));
-        mat4x3 _316 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
-        vec4 _318;
-        _318.x = _316[0].x;
-        mat4x3 _319 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
-        _318.y = _319[1].x;
-        mat4x3 _322 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
-        _318.z = _322[2].x;
-        mat4x3 _325 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
-        _318.w = _325[3].x;
-        mat4x3 _328 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
-        vec4 _330;
-        _330.x = _328[0].x;
-        mat4x3 _331 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
-        _330.y = _331[1].x;
-        mat4x3 _334 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
-        _330.z = _334[2].x;
-        mat4x3 _337 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
-        _330.w = _337[3].x;
-        uint _340 = gl_LocalInvocationIndex << 2u;
-        uint _346 = (gl_LocalInvocationIndex * 16u) + 156u;
-        uvec4 _347 = floatBitsToUint(_318);
-        imageStore(_14, int(_346), uvec4(_347.x));
-        imageStore(_14, int(_346 + 1u), uvec4(_347.y));
-        imageStore(_14, int(_346 + 2u), uvec4(_347.z));
-        imageStore(_14, int(_346 + 3u), uvec4(_347.w));
-        uint _364 = (gl_LocalInvocationIndex * 16u) + 160u;
-        uvec4 _365 = floatBitsToUint(_330);
-        imageStore(_14, int(_364), uvec4(_365.x));
-        imageStore(_14, int(_364 + 1u), uvec4(_365.y));
-        imageStore(_14, int(_364 + 2u), uvec4(_365.z));
-        imageStore(_14, int(_364 + 3u), uvec4(_365.w));
-        mat4x3 _377 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
-        vec3 _379;
-        _379.x = _377[0].x;
-        mat4x3 _380 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
-        _379.y = _380[0].y;
-        mat4x3 _383 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
-        _379.z = _383[0].z;
-        mat4x3 _386 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
-        vec3 _388;
-        _388.x = _386[0].x;
-        mat4x3 _389 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
-        _388.y = _389[0].y;
-        mat4x3 _392 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
-        _388.z = _392[0].z;
-        uint _400 = (gl_LocalInvocationIndex * 12u) + 123u;
-        uvec3 _401 = floatBitsToUint(_379);
-        imageStore(_15, int(_400), uvec4(_401.x));
-        imageStore(_15, int(_400 + 1u), uvec4(_401.y));
-        imageStore(_15, int(_400 + 2u), uvec4(_401.z));
-        uint _415 = (gl_LocalInvocationIndex * 12u) + 126u;
-        uvec3 _416 = floatBitsToUint(_388);
-        imageStore(_15, int(_415), uvec4(_416.x));
-        imageStore(_15, int(_415 + 1u), uvec4(_416.y));
-        imageStore(_15, int(_415 + 2u), uvec4(_416.z));
-        float _425 = rayQueryGetIntersectionTEXT(_21, bool(1u));
-        imageStore(_13, int((_205 | 43u) + 0u), uvec4(floatBitsToUint(_425)));
+        uint _266 = rayQueryGetIntersectionInstanceIdEXT(_21, bool(1u));
+        imageStore(_12, int(_205 | 32u), uvec4(_266));
+        uint _271 = rayQueryGetIntersectionInstanceCustomIndexEXT(_21, bool(1u));
+        imageStore(_12, int(_205 | 33u), uvec4(_271));
+        uint _276 = rayQueryGetIntersectionGeometryIndexEXT(_21, bool(1u));
+        imageStore(_12, int(_205 | 34u), uvec4(_276));
+        uint _281 = rayQueryGetIntersectionPrimitiveIndexEXT(_21, bool(1u));
+        imageStore(_12, int(_205 | 35u), uvec4(_281));
+        vec3 _286 = rayQueryGetIntersectionObjectRayOriginEXT(_21, bool(1u));
+        imageStore(_13, int(_205 | 36u), uvec4(floatBitsToUint(_286.x)));
+        vec3 _293 = rayQueryGetIntersectionObjectRayDirectionEXT(_21, bool(1u));
+        imageStore(_13, int(_205 | 37u), uvec4(floatBitsToUint(_293.y)));
+        uint _300 = rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(_21, bool(1u));
+        imageStore(_12, int(_205 | 38u), uvec4(_300));
+        mat4x3 _305 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
+        vec4 _307;
+        _307.x = _305[0].x;
+        mat4x3 _308 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
+        _307.y = _308[1].x;
+        mat4x3 _311 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
+        _307.z = _311[2].x;
+        mat4x3 _314 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
+        _307.w = _314[3].x;
+        mat4x3 _317 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
+        vec4 _319;
+        _319.x = _317[0].x;
+        mat4x3 _320 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
+        _319.y = _320[1].x;
+        mat4x3 _323 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
+        _319.z = _323[2].x;
+        mat4x3 _326 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
+        _319.w = _326[3].x;
+        uint _329 = gl_LocalInvocationIndex << 2u;
+        uint _335 = (gl_LocalInvocationIndex * 16u) + 156u;
+        uvec4 _336 = floatBitsToUint(_307);
+        imageStore(_14, int(_335), uvec4(_336.x));
+        imageStore(_14, int(_335 + 1u), uvec4(_336.y));
+        imageStore(_14, int(_335 + 2u), uvec4(_336.z));
+        imageStore(_14, int(_335 + 3u), uvec4(_336.w));
+        uint _353 = (gl_LocalInvocationIndex * 16u) + 160u;
+        uvec4 _354 = floatBitsToUint(_319);
+        imageStore(_14, int(_353), uvec4(_354.x));
+        imageStore(_14, int(_353 + 1u), uvec4(_354.y));
+        imageStore(_14, int(_353 + 2u), uvec4(_354.z));
+        imageStore(_14, int(_353 + 3u), uvec4(_354.w));
+        mat4x3 _366 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
+        vec3 _368;
+        _368.x = _366[0].x;
+        mat4x3 _369 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
+        _368.y = _369[0].y;
+        mat4x3 _372 = rayQueryGetIntersectionWorldToObjectEXT(_21, bool(1u));
+        _368.z = _372[0].z;
+        mat4x3 _375 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
+        vec3 _377;
+        _377.x = _375[0].x;
+        mat4x3 _378 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
+        _377.y = _378[0].y;
+        mat4x3 _381 = rayQueryGetIntersectionObjectToWorldEXT(_21, bool(1u));
+        _377.z = _381[0].z;
+        uint _389 = (gl_LocalInvocationIndex * 12u) + 123u;
+        uvec3 _390 = floatBitsToUint(_368);
+        imageStore(_15, int(_389), uvec4(_390.x));
+        imageStore(_15, int(_389 + 1u), uvec4(_390.y));
+        imageStore(_15, int(_389 + 2u), uvec4(_390.z));
+        uint _404 = (gl_LocalInvocationIndex * 12u) + 126u;
+        uvec3 _405 = floatBitsToUint(_377);
+        imageStore(_15, int(_404), uvec4(_405.x));
+        imageStore(_15, int(_404 + 1u), uvec4(_405.y));
+        imageStore(_15, int(_404 + 2u), uvec4(_405.z));
+        float _414 = rayQueryGetIntersectionTEXT(_21, bool(1u));
+        imageStore(_13, int(_205 | 43u), uvec4(floatBitsToUint(_414)));
     }
-    uint _267 = rayQueryGetIntersectionTypeEXT(_21, bool(1u));
-    if (_267 == 1u)
+    uint _263 = rayQueryGetIntersectionTypeEXT(_21, bool(1u));
+    if (_263 == 1u)
     {
-        imageStore(_12, int((_205 | 13u) + 0u), uvec4(_206));
-        vec2 _444 = rayQueryGetIntersectionBarycentricsEXT(_21, bool(1u));
-        imageStore(_13, int(_205 + 44u), uvec4(floatBitsToUint(_444.y)));
-        bool _452 = rayQueryGetIntersectionFrontFaceEXT(_21, bool(1u));
-        imageStore(_12, int((_205 | 45u) + 0u), uvec4(_452 ? 100u : 10u));
+        imageStore(_12, int(_205 | 13u), uvec4(_206));
+        vec2 _431 = rayQueryGetIntersectionBarycentricsEXT(_21, bool(1u));
+        imageStore(_13, int(_205 | 44u), uvec4(floatBitsToUint(_431.y)));
+        bool _438 = rayQueryGetIntersectionFrontFaceEXT(_21, bool(1u));
+        imageStore(_12, int(_205 | 45u), uvec4(_438 ? 100u : 10u));
     }
     else
     {
-        if (_267 == 2u)
+        if (_263 == 2u)
         {
-            imageStore(_12, int(_205 + 14u), uvec4(_207));
+            imageStore(_12, int(_205 | 14u), uvec4(_207));
         }
         else
         {
-            imageStore(_12, int((_205 | 15u) + 0u), uvec4(_208));
+            imageStore(_12, int(_205 | 15u), uvec4(_208));
         }
     }
 }
@@ -284,7 +284,7 @@ void main()
 ; SPIR-V
 ; Version: 1.6
 ; Generator: Unknown(30017); 21022
-; Bound: 495
+; Bound: 478
 ; Schema: 0
 OpCapability Shader
 OpCapability ImageBuffer
@@ -295,9 +295,9 @@ OpMemoryModel Logical GLSL450
 OpEntryPoint GLCompute %3 "main" %8 %12 %13 %14 %15 %17 %21
 OpExecutionMode %3 LocalSize 64 1 1
 OpName %3 "main"
-OpName %468 "frontier_phi_9.6.ladder"
-OpName %469 "frontier_phi_9.6.ladder"
-OpName %470 "frontier_phi_9.6.ladder"
+OpName %451 "frontier_phi_9.6.ladder"
+OpName %452 "frontier_phi_9.6.ladder"
+OpName %453 "frontier_phi_9.6.ladder"
 OpDecorate %8 DescriptorSet 0
 OpDecorate %8 Binding 0
 OpDecorate %12 DescriptorSet 0
@@ -359,54 +359,54 @@ OpDecorate %17 BuiltIn LocalInvocationIndex
 %180 = OpConstant %9 12
 %181 = OpTypeVector %9 3
 %211 = OpConstant %9 9
-%218 = OpConstant %9 10
-%226 = OpConstant %9 11
-%247 = OpTypeVector %25 2
-%251 = OpConstant %9 7
-%259 = OpConstant %9 100
-%261 = OpConstant %9 8
-%272 = OpConstant %9 32
-%278 = OpConstant %9 33
-%284 = OpConstant %9 34
-%290 = OpConstant %9 35
-%297 = OpConstant %9 36
-%305 = OpConstant %9 37
-%312 = OpConstant %9 38
-%342 = OpConstant %9 39
-%345 = OpConstant %9 156
-%360 = OpConstant %9 40
-%363 = OpConstant %9 160
-%396 = OpConstant %9 41
-%399 = OpConstant %9 123
-%411 = OpConstant %9 42
-%414 = OpConstant %9 126
-%427 = OpConstant %9 43
-%439 = OpConstant %25 0.5
-%441 = OpConstant %9 13
-%447 = OpConstant %9 44
-%455 = OpConstant %9 45
-%461 = OpConstant %9 14
-%465 = OpConstant %9 15
+%217 = OpConstant %9 10
+%224 = OpConstant %9 11
+%243 = OpTypeVector %25 2
+%247 = OpConstant %9 7
+%255 = OpConstant %9 100
+%257 = OpConstant %9 8
+%268 = OpConstant %9 32
+%273 = OpConstant %9 33
+%278 = OpConstant %9 34
+%283 = OpConstant %9 35
+%289 = OpConstant %9 36
+%296 = OpConstant %9 37
+%302 = OpConstant %9 38
+%331 = OpConstant %9 39
+%334 = OpConstant %9 156
+%349 = OpConstant %9 40
+%352 = OpConstant %9 160
+%385 = OpConstant %9 41
+%388 = OpConstant %9 123
+%400 = OpConstant %9 42
+%403 = OpConstant %9 126
+%416 = OpConstant %9 43
+%427 = OpConstant %25 0.5
+%429 = OpConstant %9 13
+%434 = OpConstant %9 44
+%441 = OpConstant %9 45
+%446 = OpConstant %9 14
+%449 = OpConstant %9 15
 %3 = OpFunction %1 None %2
 %4 = OpLabel
 %106 = OpUndef %104
 %162 = OpUndef %32
-OpBranch %471
-%471 = OpLabel
+OpBranch %454
+%454 = OpLabel
 %18 = OpLoad %9 %17
 %22 = OpLoad %6 %8
 %33 = OpCompositeConstruct %32 %26 %28 %30
 %35 = OpCompositeConstruct %32 %27 %29 %31
 OpRayQueryInitializeKHR %21 %22 %23 %24 %33 %34 %35 %36
 %38 = OpRayQueryProceedKHR %37 %21
-OpSelectionMerge %485 None
-OpBranchConditional %38 %473 %472
-%473 = OpLabel
-OpBranch %474
-%474 = OpLabel
-%41 = OpPhi %9 %43 %473 %42 %483
-%44 = OpPhi %9 %43 %473 %45 %483
-%46 = OpPhi %9 %43 %473 %47 %483
+OpSelectionMerge %468 None
+OpBranchConditional %38 %456 %455
+%456 = OpLabel
+OpBranch %457
+%457 = OpLabel
+%41 = OpPhi %9 %43 %456 %42 %466
+%44 = OpPhi %9 %43 %456 %45 %466
+%46 = OpPhi %9 %43 %456 %47 %466
 %48 = OpRayQueryGetIntersectionInstanceIdKHR %9 %21 %43
 %49 = OpShiftLeftLogical %9 %18 %40
 %50 = OpLoad %10 %12
@@ -571,331 +571,314 @@ OpImageWrite %191 %200 %199
 OpImageWrite %191 %202 %201
 %203 = OpRayQueryGetIntersectionTypeKHR %9 %21 %43
 %204 = OpIEqual %37 %203 %43
-OpLoopMerge %484 %483 None
-OpBranch %475
-%475 = OpLabel
-OpSelectionMerge %480 None
-OpBranchConditional %204 %479 %476
-%479 = OpLabel
-%239 = OpIAdd %9 %41 %57
-%240 = OpRayQueryGetIntersectionTKHR %25 %21 %43
-%241 = OpBitwiseOr %9 %49 %40
-%242 = OpLoad %10 %13
-%243 = OpIMul %9 %18 %52
-%244 = OpIAdd %9 %243 %40
-%245 = OpBitcast %9 %240
-%246 = OpCompositeConstruct %53 %245 %245 %245 %245
-OpImageWrite %242 %244 %246
-%248 = OpRayQueryGetIntersectionBarycentricsKHR %247 %21 %43
-%249 = OpCompositeExtract %25 %248 1
-%250 = OpBitwiseOr %9 %49 %251
-%252 = OpLoad %10 %13
-%253 = OpIMul %9 %18 %52
-%254 = OpIAdd %9 %253 %251
-%255 = OpBitcast %9 %249
-%256 = OpCompositeConstruct %53 %255 %255 %255 %255
-OpImageWrite %252 %254 %256
-%257 = OpRayQueryGetIntersectionFrontFaceKHR %37 %21 %43
-%258 = OpSelect %9 %257 %259 %218
-%260 = OpBitwiseOr %9 %49 %261
-%262 = OpLoad %10 %12
-%263 = OpIMul %9 %18 %52
-%264 = OpIAdd %9 %263 %261
-%265 = OpCompositeConstruct %53 %258 %258 %258 %258
-OpImageWrite %262 %264 %265
+OpLoopMerge %467 %466 None
+OpBranch %458
+%458 = OpLabel
+OpSelectionMerge %463 None
+OpBranchConditional %204 %462 %459
+%462 = OpLabel
+%235 = OpIAdd %9 %41 %57
+%236 = OpRayQueryGetIntersectionTKHR %25 %21 %43
+%237 = OpBitwiseOr %9 %49 %40
+%238 = OpLoad %10 %13
+%239 = OpIMul %9 %18 %52
+%240 = OpIAdd %9 %239 %40
+%241 = OpBitcast %9 %236
+%242 = OpCompositeConstruct %53 %241 %241 %241 %241
+OpImageWrite %238 %240 %242
+%244 = OpRayQueryGetIntersectionBarycentricsKHR %243 %21 %43
+%245 = OpCompositeExtract %25 %244 1
+%246 = OpBitwiseOr %9 %49 %247
+%248 = OpLoad %10 %13
+%249 = OpIMul %9 %18 %52
+%250 = OpIAdd %9 %249 %247
+%251 = OpBitcast %9 %245
+%252 = OpCompositeConstruct %53 %251 %251 %251 %251
+OpImageWrite %248 %250 %252
+%253 = OpRayQueryGetIntersectionFrontFaceKHR %37 %21 %43
+%254 = OpSelect %9 %253 %255 %217
+%256 = OpBitwiseOr %9 %49 %257
+%258 = OpLoad %10 %12
+%259 = OpIMul %9 %18 %52
+%260 = OpIAdd %9 %259 %257
+%261 = OpCompositeConstruct %53 %254 %254 %254 %254
+OpImageWrite %258 %260 %261
 OpRayQueryConfirmIntersectionKHR %21
-OpBranch %480
-%476 = OpLabel
-%266 = OpIEqual %37 %203 %57
-OpSelectionMerge %478 None
-OpBranchConditional %266 %477 %478
-%477 = OpLabel
-%435 = OpRayQueryGetIntersectionCandidateAABBOpaqueKHR %37 %21
-%436 = OpLogicalNot %37 %435
-%437 = OpSelect %9 %436 %57 %43
-%432 = OpIAdd %9 %437 %44
-%438 = OpBitwiseXor %9 %437 %57
-%433 = OpIAdd %9 %438 %46
-OpRayQueryGenerateIntersectionKHR %21 %439
-OpBranch %478
-%478 = OpLabel
-%468 = OpPhi %9 %41 %477 %41 %476
-%469 = OpPhi %9 %432 %477 %44 %476
-%470 = OpPhi %9 %433 %477 %46 %476
-OpBranch %480
-%480 = OpLabel
-%42 = OpPhi %9 %239 %479 %468 %478
-%45 = OpPhi %9 %44 %479 %469 %478
-%47 = OpPhi %9 %46 %479 %470 %478
-%434 = OpIEqual %37 %42 %79
-OpSelectionMerge %482 None
-OpBranchConditional %434 %481 %482
-%481 = OpLabel
+OpBranch %463
+%459 = OpLabel
+%262 = OpIEqual %37 %203 %57
+OpSelectionMerge %461 None
+OpBranchConditional %262 %460 %461
+%460 = OpLabel
+%423 = OpRayQueryGetIntersectionCandidateAABBOpaqueKHR %37 %21
+%424 = OpLogicalNot %37 %423
+%425 = OpSelect %9 %424 %57 %43
+%420 = OpIAdd %9 %425 %44
+%426 = OpBitwiseXor %9 %425 %57
+%421 = OpIAdd %9 %426 %46
+OpRayQueryGenerateIntersectionKHR %21 %427
+OpBranch %461
+%461 = OpLabel
+%451 = OpPhi %9 %41 %460 %41 %459
+%452 = OpPhi %9 %420 %460 %44 %459
+%453 = OpPhi %9 %421 %460 %46 %459
+OpBranch %463
+%463 = OpLabel
+%42 = OpPhi %9 %235 %462 %451 %461
+%45 = OpPhi %9 %44 %462 %452 %461
+%47 = OpPhi %9 %46 %462 %453 %461
+%422 = OpIEqual %37 %42 %79
+OpSelectionMerge %465 None
+OpBranchConditional %422 %464 %465
+%464 = OpLabel
 OpRayQueryTerminateKHR %21
-OpBranch %482
-%482 = OpLabel
-OpBranch %483
-%483 = OpLabel
-%459 = OpRayQueryProceedKHR %37 %21
-OpBranchConditional %459 %474 %484
-%484 = OpLabel
-OpBranch %485
-%472 = OpLabel
+OpBranch %465
+%465 = OpLabel
+OpBranch %466
+%466 = OpLabel
+%444 = OpRayQueryProceedKHR %37 %21
+OpBranchConditional %444 %457 %467
+%467 = OpLabel
+OpBranch %468
+%455 = OpLabel
 %39 = OpShiftLeftLogical %9 %18 %40
-OpBranch %485
-%485 = OpLabel
-%205 = OpPhi %9 %39 %472 %49 %484
-%206 = OpPhi %9 %43 %472 %42 %484
-%207 = OpPhi %9 %43 %472 %45 %484
-%208 = OpPhi %9 %43 %472 %47 %484
+OpBranch %468
+%468 = OpLabel
+%205 = OpPhi %9 %39 %455 %49 %467
+%206 = OpPhi %9 %43 %455 %42 %467
+%207 = OpPhi %9 %43 %455 %45 %467
+%208 = OpPhi %9 %43 %455 %47 %467
 %209 = OpRayQueryGetRayFlagsKHR %9 %21
 %210 = OpBitwiseOr %9 %205 %211
 %212 = OpLoad %10 %12
-%213 = OpIAdd %9 %210 %43
-%214 = OpCompositeConstruct %53 %209 %209 %209 %209
-OpImageWrite %212 %213 %214
-%215 = OpRayQueryGetWorldRayOriginKHR %32 %21
-%216 = OpCompositeExtract %25 %215 0
-%217 = OpBitwiseOr %9 %205 %218
-%219 = OpLoad %10 %13
-%220 = OpIAdd %9 %205 %218
-%221 = OpBitcast %9 %216
-%222 = OpCompositeConstruct %53 %221 %221 %221 %221
-OpImageWrite %219 %220 %222
-%223 = OpRayQueryGetWorldRayDirectionKHR %32 %21
-%224 = OpCompositeExtract %25 %223 1
-%225 = OpBitwiseOr %9 %205 %226
-%227 = OpLoad %10 %13
-%228 = OpIAdd %9 %225 %43
-%229 = OpBitcast %9 %224
-%230 = OpCompositeConstruct %53 %229 %229 %229 %229
-OpImageWrite %227 %228 %230
-%231 = OpRayQueryGetRayTMinKHR %25 %21
-%232 = OpBitwiseOr %9 %205 %180
-%233 = OpLoad %10 %13
-%234 = OpIAdd %9 %205 %180
-%235 = OpBitcast %9 %231
-%236 = OpCompositeConstruct %53 %235 %235 %235 %235
-OpImageWrite %233 %234 %236
-%237 = OpRayQueryGetIntersectionTypeKHR %9 %21 %57
-%238 = OpIEqual %37 %237 %43
-OpSelectionMerge %487 None
-OpBranchConditional %238 %487 %486
-%486 = OpLabel
-%270 = OpRayQueryGetIntersectionInstanceIdKHR %9 %21 %57
-%271 = OpBitwiseOr %9 %205 %272
-%273 = OpLoad %10 %12
-%274 = OpIAdd %9 %205 %272
-%275 = OpCompositeConstruct %53 %270 %270 %270 %270
-OpImageWrite %273 %274 %275
-%276 = OpRayQueryGetIntersectionInstanceCustomIndexKHR %9 %21 %57
+%213 = OpCompositeConstruct %53 %209 %209 %209 %209
+OpImageWrite %212 %210 %213
+%214 = OpRayQueryGetWorldRayOriginKHR %32 %21
+%215 = OpCompositeExtract %25 %214 0
+%216 = OpBitwiseOr %9 %205 %217
+%218 = OpLoad %10 %13
+%219 = OpBitcast %9 %215
+%220 = OpCompositeConstruct %53 %219 %219 %219 %219
+OpImageWrite %218 %216 %220
+%221 = OpRayQueryGetWorldRayDirectionKHR %32 %21
+%222 = OpCompositeExtract %25 %221 1
+%223 = OpBitwiseOr %9 %205 %224
+%225 = OpLoad %10 %13
+%226 = OpBitcast %9 %222
+%227 = OpCompositeConstruct %53 %226 %226 %226 %226
+OpImageWrite %225 %223 %227
+%228 = OpRayQueryGetRayTMinKHR %25 %21
+%229 = OpBitwiseOr %9 %205 %180
+%230 = OpLoad %10 %13
+%231 = OpBitcast %9 %228
+%232 = OpCompositeConstruct %53 %231 %231 %231 %231
+OpImageWrite %230 %229 %232
+%233 = OpRayQueryGetIntersectionTypeKHR %9 %21 %57
+%234 = OpIEqual %37 %233 %43
+OpSelectionMerge %470 None
+OpBranchConditional %234 %470 %469
+%469 = OpLabel
+%266 = OpRayQueryGetIntersectionInstanceIdKHR %9 %21 %57
+%267 = OpBitwiseOr %9 %205 %268
+%269 = OpLoad %10 %12
+%270 = OpCompositeConstruct %53 %266 %266 %266 %266
+OpImageWrite %269 %267 %270
+%271 = OpRayQueryGetIntersectionInstanceCustomIndexKHR %9 %21 %57
+%272 = OpBitwiseOr %9 %205 %273
+%274 = OpLoad %10 %12
+%275 = OpCompositeConstruct %53 %271 %271 %271 %271
+OpImageWrite %274 %272 %275
+%276 = OpRayQueryGetIntersectionGeometryIndexKHR %9 %21 %57
 %277 = OpBitwiseOr %9 %205 %278
 %279 = OpLoad %10 %12
-%280 = OpIAdd %9 %277 %43
-%281 = OpCompositeConstruct %53 %276 %276 %276 %276
-OpImageWrite %279 %280 %281
-%282 = OpRayQueryGetIntersectionGeometryIndexKHR %9 %21 %57
-%283 = OpBitwiseOr %9 %205 %284
-%285 = OpLoad %10 %12
-%286 = OpIAdd %9 %205 %284
-%287 = OpCompositeConstruct %53 %282 %282 %282 %282
-OpImageWrite %285 %286 %287
-%288 = OpRayQueryGetIntersectionPrimitiveIndexKHR %9 %21 %57
-%289 = OpBitwiseOr %9 %205 %290
-%291 = OpLoad %10 %12
-%292 = OpIAdd %9 %289 %43
-%293 = OpCompositeConstruct %53 %288 %288 %288 %288
-OpImageWrite %291 %292 %293
-%294 = OpRayQueryGetIntersectionObjectRayOriginKHR %32 %21 %57
-%295 = OpCompositeExtract %25 %294 0
-%296 = OpBitwiseOr %9 %205 %297
-%298 = OpLoad %10 %13
-%299 = OpIAdd %9 %205 %297
-%300 = OpBitcast %9 %295
-%301 = OpCompositeConstruct %53 %300 %300 %300 %300
-OpImageWrite %298 %299 %301
-%302 = OpRayQueryGetIntersectionObjectRayDirectionKHR %32 %21 %57
-%303 = OpCompositeExtract %25 %302 1
-%304 = OpBitwiseOr %9 %205 %305
-%306 = OpLoad %10 %13
-%307 = OpIAdd %9 %304 %43
-%308 = OpBitcast %9 %303
-%309 = OpCompositeConstruct %53 %308 %308 %308 %308
-OpImageWrite %306 %307 %309
-%310 = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %9 %21 %57
-%311 = OpBitwiseOr %9 %205 %312
-%313 = OpLoad %10 %12
-%314 = OpIAdd %9 %205 %312
-%315 = OpCompositeConstruct %53 %310 %310 %310 %310
-OpImageWrite %313 %314 %315
-%316 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
-%317 = OpCompositeExtract %25 %316 0 0
-%318 = OpCompositeInsert %104 %317 %106 0
-%319 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
-%320 = OpCompositeExtract %25 %319 1 0
-%321 = OpCompositeInsert %104 %320 %318 1
-%322 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
-%323 = OpCompositeExtract %25 %322 2 0
-%324 = OpCompositeInsert %104 %323 %321 2
-%325 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
-%326 = OpCompositeExtract %25 %325 3 0
-%327 = OpCompositeInsert %104 %326 %324 3
-%328 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
-%329 = OpCompositeExtract %25 %328 0 0
-%330 = OpCompositeInsert %104 %329 %106 0
-%331 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
-%332 = OpCompositeExtract %25 %331 1 0
-%333 = OpCompositeInsert %104 %332 %330 1
-%334 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
-%335 = OpCompositeExtract %25 %334 2 0
-%336 = OpCompositeInsert %104 %335 %333 2
-%337 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
-%338 = OpCompositeExtract %25 %337 3 0
-%339 = OpCompositeInsert %104 %338 %336 3
-%340 = OpShiftLeftLogical %9 %18 %64
-%341 = OpIAdd %9 %340 %342
-%343 = OpLoad %10 %14
-%344 = OpIMul %9 %18 %96
-%346 = OpIAdd %9 %344 %345
-%347 = OpBitcast %53 %327
-%348 = OpCompositeExtract %9 %347 0
-%349 = OpCompositeExtract %9 %347 1
-%350 = OpCompositeExtract %9 %347 2
-%351 = OpCompositeExtract %9 %347 3
-%352 = OpCompositeConstruct %53 %348 %348 %348 %348
-OpImageWrite %343 %346 %352
-%353 = OpCompositeConstruct %53 %349 %349 %349 %349
-%354 = OpIAdd %9 %346 %57
-OpImageWrite %343 %354 %353
-%355 = OpCompositeConstruct %53 %350 %350 %350 %350
-%356 = OpIAdd %9 %346 %64
-OpImageWrite %343 %356 %355
-%357 = OpCompositeConstruct %53 %351 %351 %351 %351
-%358 = OpIAdd %9 %346 %71
-OpImageWrite %343 %358 %357
-%359 = OpIAdd %9 %340 %360
-%361 = OpLoad %10 %14
-%362 = OpIMul %9 %18 %96
-%364 = OpIAdd %9 %362 %363
-%365 = OpBitcast %53 %339
-%366 = OpCompositeExtract %9 %365 0
-%367 = OpCompositeExtract %9 %365 1
-%368 = OpCompositeExtract %9 %365 2
-%369 = OpCompositeExtract %9 %365 3
-%370 = OpCompositeConstruct %53 %366 %366 %366 %366
-OpImageWrite %361 %364 %370
-%371 = OpCompositeConstruct %53 %367 %367 %367 %367
-%372 = OpIAdd %9 %364 %57
-OpImageWrite %361 %372 %371
-%373 = OpCompositeConstruct %53 %368 %368 %368 %368
-%374 = OpIAdd %9 %364 %64
-OpImageWrite %361 %374 %373
-%375 = OpCompositeConstruct %53 %369 %369 %369 %369
-%376 = OpIAdd %9 %364 %71
-OpImageWrite %361 %376 %375
-%377 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
-%378 = OpCompositeExtract %25 %377 0 0
-%379 = OpCompositeInsert %32 %378 %162 0
-%380 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
-%381 = OpCompositeExtract %25 %380 0 1
-%382 = OpCompositeInsert %32 %381 %379 1
-%383 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
-%384 = OpCompositeExtract %25 %383 0 2
-%385 = OpCompositeInsert %32 %384 %382 2
-%386 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
-%387 = OpCompositeExtract %25 %386 0 0
-%388 = OpCompositeInsert %32 %387 %162 0
-%389 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
-%390 = OpCompositeExtract %25 %389 0 1
-%391 = OpCompositeInsert %32 %390 %388 1
-%392 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
-%393 = OpCompositeExtract %25 %392 0 2
-%394 = OpCompositeInsert %32 %393 %391 2
-%395 = OpIAdd %9 %340 %396
-%397 = OpLoad %10 %15
-%398 = OpIMul %9 %18 %180
-%400 = OpIAdd %9 %398 %399
-%401 = OpBitcast %181 %385
-%402 = OpCompositeExtract %9 %401 0
-%403 = OpCompositeExtract %9 %401 1
-%404 = OpCompositeExtract %9 %401 2
-%405 = OpCompositeConstruct %53 %402 %402 %402 %402
-OpImageWrite %397 %400 %405
-%406 = OpCompositeConstruct %53 %403 %403 %403 %403
-%407 = OpIAdd %9 %400 %57
-OpImageWrite %397 %407 %406
-%408 = OpCompositeConstruct %53 %404 %404 %404 %404
-%409 = OpIAdd %9 %400 %64
-OpImageWrite %397 %409 %408
-%410 = OpIAdd %9 %340 %411
-%412 = OpLoad %10 %15
-%413 = OpIMul %9 %18 %180
-%415 = OpIAdd %9 %413 %414
-%416 = OpBitcast %181 %394
-%417 = OpCompositeExtract %9 %416 0
-%418 = OpCompositeExtract %9 %416 1
-%419 = OpCompositeExtract %9 %416 2
-%420 = OpCompositeConstruct %53 %417 %417 %417 %417
-OpImageWrite %412 %415 %420
-%421 = OpCompositeConstruct %53 %418 %418 %418 %418
-%422 = OpIAdd %9 %415 %57
-OpImageWrite %412 %422 %421
-%423 = OpCompositeConstruct %53 %419 %419 %419 %419
-%424 = OpIAdd %9 %415 %64
-OpImageWrite %412 %424 %423
-%425 = OpRayQueryGetIntersectionTKHR %25 %21 %57
-%426 = OpBitwiseOr %9 %205 %427
-%428 = OpLoad %10 %13
-%429 = OpIAdd %9 %426 %43
-%430 = OpBitcast %9 %425
-%431 = OpCompositeConstruct %53 %430 %430 %430 %430
-OpImageWrite %428 %429 %431
-OpBranch %487
-%487 = OpLabel
-%267 = OpRayQueryGetIntersectionTypeKHR %9 %21 %57
-%268 = OpIEqual %37 %267 %57
-%269 = OpLoad %10 %12
-OpSelectionMerge %493 None
-OpBranchConditional %268 %492 %488
-%492 = OpLabel
+%280 = OpCompositeConstruct %53 %276 %276 %276 %276
+OpImageWrite %279 %277 %280
+%281 = OpRayQueryGetIntersectionPrimitiveIndexKHR %9 %21 %57
+%282 = OpBitwiseOr %9 %205 %283
+%284 = OpLoad %10 %12
+%285 = OpCompositeConstruct %53 %281 %281 %281 %281
+OpImageWrite %284 %282 %285
+%286 = OpRayQueryGetIntersectionObjectRayOriginKHR %32 %21 %57
+%287 = OpCompositeExtract %25 %286 0
+%288 = OpBitwiseOr %9 %205 %289
+%290 = OpLoad %10 %13
+%291 = OpBitcast %9 %287
+%292 = OpCompositeConstruct %53 %291 %291 %291 %291
+OpImageWrite %290 %288 %292
+%293 = OpRayQueryGetIntersectionObjectRayDirectionKHR %32 %21 %57
+%294 = OpCompositeExtract %25 %293 1
+%295 = OpBitwiseOr %9 %205 %296
+%297 = OpLoad %10 %13
+%298 = OpBitcast %9 %294
+%299 = OpCompositeConstruct %53 %298 %298 %298 %298
+OpImageWrite %297 %295 %299
+%300 = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %9 %21 %57
+%301 = OpBitwiseOr %9 %205 %302
+%303 = OpLoad %10 %12
+%304 = OpCompositeConstruct %53 %300 %300 %300 %300
+OpImageWrite %303 %301 %304
+%305 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
+%306 = OpCompositeExtract %25 %305 0 0
+%307 = OpCompositeInsert %104 %306 %106 0
+%308 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
+%309 = OpCompositeExtract %25 %308 1 0
+%310 = OpCompositeInsert %104 %309 %307 1
+%311 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
+%312 = OpCompositeExtract %25 %311 2 0
+%313 = OpCompositeInsert %104 %312 %310 2
+%314 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
+%315 = OpCompositeExtract %25 %314 3 0
+%316 = OpCompositeInsert %104 %315 %313 3
+%317 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
+%318 = OpCompositeExtract %25 %317 0 0
+%319 = OpCompositeInsert %104 %318 %106 0
+%320 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
+%321 = OpCompositeExtract %25 %320 1 0
+%322 = OpCompositeInsert %104 %321 %319 1
+%323 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
+%324 = OpCompositeExtract %25 %323 2 0
+%325 = OpCompositeInsert %104 %324 %322 2
+%326 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
+%327 = OpCompositeExtract %25 %326 3 0
+%328 = OpCompositeInsert %104 %327 %325 3
+%329 = OpShiftLeftLogical %9 %18 %64
+%330 = OpIAdd %9 %329 %331
+%332 = OpLoad %10 %14
+%333 = OpIMul %9 %18 %96
+%335 = OpIAdd %9 %333 %334
+%336 = OpBitcast %53 %316
+%337 = OpCompositeExtract %9 %336 0
+%338 = OpCompositeExtract %9 %336 1
+%339 = OpCompositeExtract %9 %336 2
+%340 = OpCompositeExtract %9 %336 3
+%341 = OpCompositeConstruct %53 %337 %337 %337 %337
+OpImageWrite %332 %335 %341
+%342 = OpCompositeConstruct %53 %338 %338 %338 %338
+%343 = OpIAdd %9 %335 %57
+OpImageWrite %332 %343 %342
+%344 = OpCompositeConstruct %53 %339 %339 %339 %339
+%345 = OpIAdd %9 %335 %64
+OpImageWrite %332 %345 %344
+%346 = OpCompositeConstruct %53 %340 %340 %340 %340
+%347 = OpIAdd %9 %335 %71
+OpImageWrite %332 %347 %346
+%348 = OpIAdd %9 %329 %349
+%350 = OpLoad %10 %14
+%351 = OpIMul %9 %18 %96
+%353 = OpIAdd %9 %351 %352
+%354 = OpBitcast %53 %328
+%355 = OpCompositeExtract %9 %354 0
+%356 = OpCompositeExtract %9 %354 1
+%357 = OpCompositeExtract %9 %354 2
+%358 = OpCompositeExtract %9 %354 3
+%359 = OpCompositeConstruct %53 %355 %355 %355 %355
+OpImageWrite %350 %353 %359
+%360 = OpCompositeConstruct %53 %356 %356 %356 %356
+%361 = OpIAdd %9 %353 %57
+OpImageWrite %350 %361 %360
+%362 = OpCompositeConstruct %53 %357 %357 %357 %357
+%363 = OpIAdd %9 %353 %64
+OpImageWrite %350 %363 %362
+%364 = OpCompositeConstruct %53 %358 %358 %358 %358
+%365 = OpIAdd %9 %353 %71
+OpImageWrite %350 %365 %364
+%366 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
+%367 = OpCompositeExtract %25 %366 0 0
+%368 = OpCompositeInsert %32 %367 %162 0
+%369 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
+%370 = OpCompositeExtract %25 %369 0 1
+%371 = OpCompositeInsert %32 %370 %368 1
+%372 = OpRayQueryGetIntersectionWorldToObjectKHR %101 %21 %57
+%373 = OpCompositeExtract %25 %372 0 2
+%374 = OpCompositeInsert %32 %373 %371 2
+%375 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
+%376 = OpCompositeExtract %25 %375 0 0
+%377 = OpCompositeInsert %32 %376 %162 0
+%378 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
+%379 = OpCompositeExtract %25 %378 0 1
+%380 = OpCompositeInsert %32 %379 %377 1
+%381 = OpRayQueryGetIntersectionObjectToWorldKHR %101 %21 %57
+%382 = OpCompositeExtract %25 %381 0 2
+%383 = OpCompositeInsert %32 %382 %380 2
+%384 = OpIAdd %9 %329 %385
+%386 = OpLoad %10 %15
+%387 = OpIMul %9 %18 %180
+%389 = OpIAdd %9 %387 %388
+%390 = OpBitcast %181 %374
+%391 = OpCompositeExtract %9 %390 0
+%392 = OpCompositeExtract %9 %390 1
+%393 = OpCompositeExtract %9 %390 2
+%394 = OpCompositeConstruct %53 %391 %391 %391 %391
+OpImageWrite %386 %389 %394
+%395 = OpCompositeConstruct %53 %392 %392 %392 %392
+%396 = OpIAdd %9 %389 %57
+OpImageWrite %386 %396 %395
+%397 = OpCompositeConstruct %53 %393 %393 %393 %393
+%398 = OpIAdd %9 %389 %64
+OpImageWrite %386 %398 %397
+%399 = OpIAdd %9 %329 %400
+%401 = OpLoad %10 %15
+%402 = OpIMul %9 %18 %180
+%404 = OpIAdd %9 %402 %403
+%405 = OpBitcast %181 %383
+%406 = OpCompositeExtract %9 %405 0
+%407 = OpCompositeExtract %9 %405 1
+%408 = OpCompositeExtract %9 %405 2
+%409 = OpCompositeConstruct %53 %406 %406 %406 %406
+OpImageWrite %401 %404 %409
+%410 = OpCompositeConstruct %53 %407 %407 %407 %407
+%411 = OpIAdd %9 %404 %57
+OpImageWrite %401 %411 %410
+%412 = OpCompositeConstruct %53 %408 %408 %408 %408
+%413 = OpIAdd %9 %404 %64
+OpImageWrite %401 %413 %412
+%414 = OpRayQueryGetIntersectionTKHR %25 %21 %57
+%415 = OpBitwiseOr %9 %205 %416
+%417 = OpLoad %10 %13
+%418 = OpBitcast %9 %414
+%419 = OpCompositeConstruct %53 %418 %418 %418 %418
+OpImageWrite %417 %415 %419
+OpBranch %470
+%470 = OpLabel
+%263 = OpRayQueryGetIntersectionTypeKHR %9 %21 %57
+%264 = OpIEqual %37 %263 %57
+%265 = OpLoad %10 %12
+OpSelectionMerge %476 None
+OpBranchConditional %264 %475 %471
+%475 = OpLabel
+%428 = OpBitwiseOr %9 %205 %429
+%430 = OpCompositeConstruct %53 %206 %206 %206 %206
+OpImageWrite %265 %428 %430
+%431 = OpRayQueryGetIntersectionBarycentricsKHR %243 %21 %57
+%432 = OpCompositeExtract %25 %431 1
+%433 = OpBitwiseOr %9 %205 %434
+%435 = OpLoad %10 %13
+%436 = OpBitcast %9 %432
+%437 = OpCompositeConstruct %53 %436 %436 %436 %436
+OpImageWrite %435 %433 %437
+%438 = OpRayQueryGetIntersectionFrontFaceKHR %37 %21 %57
+%439 = OpSelect %9 %438 %255 %217
 %440 = OpBitwiseOr %9 %205 %441
-%442 = OpIAdd %9 %440 %43
-%443 = OpCompositeConstruct %53 %206 %206 %206 %206
-OpImageWrite %269 %442 %443
-%444 = OpRayQueryGetIntersectionBarycentricsKHR %247 %21 %57
-%445 = OpCompositeExtract %25 %444 1
-%446 = OpBitwiseOr %9 %205 %447
-%448 = OpLoad %10 %13
-%449 = OpIAdd %9 %205 %447
-%450 = OpBitcast %9 %445
-%451 = OpCompositeConstruct %53 %450 %450 %450 %450
-OpImageWrite %448 %449 %451
-%452 = OpRayQueryGetIntersectionFrontFaceKHR %37 %21 %57
-%453 = OpSelect %9 %452 %259 %218
-%454 = OpBitwiseOr %9 %205 %455
-%456 = OpIAdd %9 %454 %43
-%457 = OpCompositeConstruct %53 %453 %453 %453 %453
-OpImageWrite %269 %456 %457
-OpBranch %493
-%488 = OpLabel
-%458 = OpIEqual %37 %267 %64
-OpSelectionMerge %491 None
-OpBranchConditional %458 %490 %489
-%490 = OpLabel
-%460 = OpBitwiseOr %9 %205 %461
-%462 = OpIAdd %9 %205 %461
-%463 = OpCompositeConstruct %53 %207 %207 %207 %207
-OpImageWrite %269 %462 %463
-OpBranch %491
-%489 = OpLabel
-%464 = OpBitwiseOr %9 %205 %465
-%466 = OpIAdd %9 %464 %43
-%467 = OpCompositeConstruct %53 %208 %208 %208 %208
-OpImageWrite %269 %466 %467
-OpBranch %491
-%491 = OpLabel
-OpBranch %493
-%493 = OpLabel
+%442 = OpCompositeConstruct %53 %439 %439 %439 %439
+OpImageWrite %265 %440 %442
+OpBranch %476
+%471 = OpLabel
+%443 = OpIEqual %37 %263 %64
+OpSelectionMerge %474 None
+OpBranchConditional %443 %473 %472
+%473 = OpLabel
+%445 = OpBitwiseOr %9 %205 %446
+%447 = OpCompositeConstruct %53 %207 %207 %207 %207
+OpImageWrite %265 %445 %447
+OpBranch %474
+%472 = OpLabel
+%448 = OpBitwiseOr %9 %205 %449
+%450 = OpCompositeConstruct %53 %208 %208 %208 %208
+OpImageWrite %265 %448 %450
+OpBranch %474
+%474 = OpLabel
+OpBranch %476
+%476 = OpLabel
 OpReturn
 OpFunctionEnd
 #endif
