@@ -9062,6 +9062,11 @@ bool Converter::Impl::analyze_instructions(llvm::Function *func)
 				if (!analyze_phi_instruction(*this, phi_inst))
 					return false;
 			}
+			else if (auto *sel_inst = llvm::dyn_cast<llvm::SelectInst>(&inst))
+			{
+				if (!analyze_select_instruction(*this, sel_inst))
+					return false;
+			}
 			else if (auto *atomicrmw_inst = llvm::dyn_cast<llvm::AtomicRMWInst>(&inst))
 			{
 				if (!analyze_atomicrmw_instruction(*this, atomicrmw_inst))
