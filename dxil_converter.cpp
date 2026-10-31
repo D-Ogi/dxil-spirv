@@ -5810,7 +5810,9 @@ bool Converter::Impl::emit_stage_input_variables()
 		// Allow certain system values that are synthesized however.
 		if (execution_model == spv::ExecutionModelTessellationEvaluation && system_value != DXIL::Semantic::DomainLocation)
 			system_value = DXIL::Semantic::User;
-		if (options.multiview.enable && stage_arrayed_inputs &&
+		// Vulkan does not permit Layer/ViewportIndex inputs on GS/HS/DS (VUID-Layer-Layer-04272/04274,
+		// VUID-ViewportIndex-ViewportIndex-04404/04406), with or without multiview.
+		if (stage_arrayed_inputs &&
 		    (system_value == DXIL::Semantic::RenderTargetArrayIndex ||
 		     system_value == DXIL::Semantic::ViewPortArrayIndex))
 			system_value = DXIL::Semantic::User;
