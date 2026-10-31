@@ -1703,7 +1703,14 @@ bool emit_getelementptr_instruction(Converter::Impl &impl, const llvm::GetElemen
 	if (DXIL::AddressSpace(instruction->getOperand(0)->getType()->getPointerAddressSpace()) == DXIL::AddressSpace::PhysicalNodeIO)
 		storage = spv::StorageClassPhysicalStorageBuffer;
 	else
-		storage = impl.get_effective_storage_class(instruction->getOperand(0), builder.getStorageClass(ptr_id));
+	{
+		// Ask the builder only when the storage class is not known. The base pointer can be the result of
+		// an earlier GEP (a GEP of a GEP, as DXC emits with -Od). That access chain is not in the builder
+		// module, so the builder cannot give its type.
+		storage = impl.get_effective_storage_class(instruction->getOperand(0), spv::StorageClassMax);
+		if (storage == spv::StorageClassMax)
+			storage = builder.getStorageClass(ptr_id);
+	}
 
 	type_id = builder.makePointer(storage, type_id);
 
