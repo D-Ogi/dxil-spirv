@@ -53,6 +53,7 @@
 #include <memory>
 #include <sstream>
 #include <stack>
+#include <type_traits>
 
 #include "thread_local_allocator.hpp"
 
@@ -274,6 +275,14 @@ public:
     void addName(Id, const char* name);
     void addMemberName(Id, int member, const char* name);
     void addDecoration(Id, Decoration, int num = -1);
+    // An unsigned value always adds the literal. A uint32_t value such as binding 0xFFFFFFFF must not
+    // become -1, which means "no literal" in the int overload.
+    template <typename T, typename std::enable_if<std::is_unsigned<T>::value && !std::is_same<T, bool>::value, int>::type = 0>
+    void addDecoration(Id id, Decoration decoration, T num)
+    {
+        addDecorationLiteral(id, decoration, unsigned(num));
+    }
+    void addDecorationLiteral(Id, Decoration, unsigned num);
     void removeDecorations(const dxil_spv::UnorderedSet<spv::Id> &ids);
     bool hasDecoration(Id, Decoration) const;
     void addUniqueDecoration(Id, Decoration, int num = -1);

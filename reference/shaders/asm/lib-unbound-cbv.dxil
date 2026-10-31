@@ -1,0 +1,75 @@
+#version 460
+
+layout(set = 0, binding = 4294967295, std140) uniform _GlobalsUBO
+{
+    vec4 _m0[1];
+} _Globals;
+
+void main()
+{
+    float _22 = float(int(floatBitsToUint(_Globals._m0[0u]).x));
+    gl_Position.x = _22;
+    gl_Position.y = _22;
+    gl_Position.z = _22;
+    gl_Position.w = _22;
+}
+
+
+#if 0
+// SPIR-V disassembly
+; SPIR-V
+; Version: 1.3
+; Generator: Unknown(30017); 21022
+; Bound: 32
+; Schema: 0
+OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Vertex %3 "main" %14
+OpName %3 "main"
+OpName %10 "$GlobalsUBO"
+OpName %12 "$Globals"
+OpName %14 "SV_Position"
+OpDecorate %9 ArrayStride 16
+OpMemberDecorate %10 0 Offset 0
+OpDecorate %10 Block
+OpDecorate %12 DescriptorSet 0
+OpDecorate %12 Binding 4294967295
+OpDecorate %14 BuiltIn Position
+%1 = OpTypeVoid
+%2 = OpTypeFunction %1
+%5 = OpTypeInt 32 0
+%6 = OpConstant %5 1
+%7 = OpTypeFloat 32
+%8 = OpTypeVector %7 4
+%9 = OpTypeArray %8 %6
+%10 = OpTypeStruct %9
+%11 = OpTypePointer Uniform %10
+%12 = OpVariable %11 Uniform
+%13 = OpTypePointer Output %8
+%14 = OpVariable %13 Output
+%15 = OpConstant %5 0
+%16 = OpTypePointer Uniform %8
+%19 = OpTypeVector %5 4
+%23 = OpTypePointer Output %7
+%27 = OpConstant %5 2
+%29 = OpConstant %5 3
+%3 = OpFunction %1 None %2
+%4 = OpLabel
+OpBranch %30
+%30 = OpLabel
+%17 = OpAccessChain %16 %12 %15 %15
+%18 = OpLoad %8 %17
+%20 = OpBitcast %19 %18
+%21 = OpCompositeExtract %5 %20 0
+%22 = OpConvertSToF %7 %21
+%24 = OpAccessChain %23 %14 %15
+OpStore %24 %22
+%25 = OpAccessChain %23 %14 %6
+OpStore %25 %22
+%26 = OpAccessChain %23 %14 %27
+OpStore %26 %22
+%28 = OpAccessChain %23 %14 %29
+OpStore %28 %22
+OpReturn
+OpFunctionEnd
+#endif

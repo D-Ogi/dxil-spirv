@@ -1232,6 +1232,18 @@ void Builder::addDecoration(Id id, Decoration decoration, int num)
     decorations.push_back(std::unique_ptr<Instruction>(dec));
 }
 
+void Builder::addDecorationLiteral(Id id, Decoration decoration, unsigned num)
+{
+    if (decoration == spv::DecorationMax)
+        return;
+    Instruction* dec = new Instruction(OpDecorate);
+    dec->addIdOperand(id);
+    dec->addImmediateOperand(decoration);
+    dec->addImmediateOperand(num);
+
+    decorations.push_back(std::unique_ptr<Instruction>(dec));
+}
+
 void Builder::removeDecorations(const dxil_spv::UnorderedSet<spv::Id> &ids)
 {
     decorations.erase(std::remove_if(decorations.begin(), decorations.end(),
