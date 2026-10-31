@@ -1,0 +1,3 @@
+[ERROR]: Function ?GetColor@@YA?AV?$vector@M$03@@I@Z is called but has no body. Linking of DXIL libraries is not supported.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.

@@ -9286,6 +9286,24 @@ ConvertedFunction Converter::Impl::convert_entry_point()
 		gather_function_dependencies(func, callees);
 	if (execution_mode_meta.patch_constant_function)
 		gather_function_dependencies(execution_mode_meta.patch_constant_function, callees);
+
+	// A DXIL library can call a function that only another library defines. The converter does not link
+	// libraries, so refuse the shader. A function without a body has no entry block to read.
+	for (auto *callee : callees)
+	{
+		if (callee->begin() == callee->end())
+		{
+#ifdef HAVE_LLVMBC
+			LOGE("Function %s is called but has no body. Linking of DXIL libraries is not supported.\n",
+			     callee->getName().c_str());
+#else
+			LOGE("Function %s is called but has no body. Linking of DXIL libraries is not supported.\n",
+			     callee->getName().str().c_str());
+#endif
+			return result;
+		}
+	}
+
 	for (auto *callee : callees)
 		for (auto &bb : *callee)
 			hit_object.blocks.push_back(&bb);
