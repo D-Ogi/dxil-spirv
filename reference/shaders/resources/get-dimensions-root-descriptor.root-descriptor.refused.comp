@@ -1,0 +1,5 @@
+[ERROR]: Cannot use GetDimensions on a root descriptor.
+[ERROR]: Failed DXIL opcode 72.
+[ERROR]: Failed to emit instruction.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.

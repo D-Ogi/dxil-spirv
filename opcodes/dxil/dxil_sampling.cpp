@@ -996,6 +996,14 @@ bool emit_get_dimensions_instruction(Converter::Impl &impl, const llvm::CallInst
 	bool has_samples = false;
 	bool has_lod = false;
 
+	if (meta.storage == spv::StorageClassPhysicalStorageBuffer)
+	{
+		// A root descriptor is only an address. It has no size to query, and D3D12 does not define the result.
+		// The image path below would read a type that is not an image.
+		LOGE("Cannot use GetDimensions on a root descriptor.\n");
+		return false;
+	}
+
 	if (meta.storage == spv::StorageClassStorageBuffer)
 	{
 		if (meta.exact_size_id)
