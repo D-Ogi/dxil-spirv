@@ -1238,7 +1238,8 @@ bool analyze_dxil_instruction_primary_pass(Converter::Impl &impl, const llvm::Ca
 			constexpr uint32_t AnnotateROVMask = 1u << 13;
 			constexpr uint32_t AnnotateGloballyCoherentMask = 1u << 14;
 			constexpr uint32_t AnnotateCounterMask = 1u << 15;
-			use.resource_kind = DXIL::ResourceKind(type & 0xff);
+			auto annotated_kind = DXIL::ResourceKind(type & 0xff);
+			use.resource_kind = DXIL::normalize_resource_kind(annotated_kind);
 			switch (use.resource_kind)
 			{
 			case DXIL::ResourceKind::CBuffer:
@@ -1261,7 +1262,11 @@ bool analyze_dxil_instruction_primary_pass(Converter::Impl &impl, const llvm::Ca
 				use.stride = params;
 			else if (use.resource_kind != DXIL::ResourceKind::RawBuffer &&
 			         use.resource_kind != DXIL::ResourceKind::CBuffer)
-				use.component_type = DXIL::ComponentType(params & 0xff);
+			{
+				// DXC writes no component type for a tbuffer. Its rows are uint4, as for a bound tbuffer.
+				use.component_type = annotated_kind == DXIL::ResourceKind::TBuffer ?
+				                     DXIL::ComponentType::U32 : DXIL::ComponentType(params & 0xff);
+			}
 		}
 		else if (meta.resource_op == DXIL::Op::CreateHandleFromBinding ||
 		         meta.resource_op == DXIL::Op::CreateHandleForLib)

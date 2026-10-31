@@ -229,6 +229,13 @@ enum class ResourceKind : uint8_t
 	FeedbackTexture2DArray
 };
 
+// A tbuffer (TextureBuffer<T>) is a buffer SRV that the shader reads with BufferLoad, one 16-byte row
+// per index. The converter handles it as a typed buffer, so the other resource code needs no TBuffer case.
+static inline ResourceKind normalize_resource_kind(ResourceKind kind)
+{
+	return kind == ResourceKind::TBuffer ? ResourceKind::TypedBuffer : kind;
+}
+
 enum class Op : unsigned
 {
 	// Input output

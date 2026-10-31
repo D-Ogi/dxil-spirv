@@ -1288,7 +1288,7 @@ bool Converter::Impl::emit_srvs(const llvm::MDNode *srvs, const llvm::MDNode *re
 			return false;
 		}
 
-		auto resource_kind = static_cast<DXIL::ResourceKind>(get_constant_metadata(srv, 6));
+		auto resource_kind = DXIL::normalize_resource_kind(static_cast<DXIL::ResourceKind>(get_constant_metadata(srv, 6)));
 
 		llvm::MDNode *tags = nullptr;
 		if (srv->getNumOperands() >= 9 && srv->getOperand(8))
@@ -2833,7 +2833,7 @@ bool Converter::Impl::scan_srvs(ResourceRemappingInterface *iface, const llvm::M
 		unsigned bind_space = get_constant_metadata(srv, 3);
 		unsigned bind_register = get_constant_metadata(srv, 4);
 		unsigned range_size = get_constant_metadata(srv, 5);
-		auto resource_kind = static_cast<DXIL::ResourceKind>(get_constant_metadata(srv, 6));
+		auto resource_kind = DXIL::normalize_resource_kind(static_cast<DXIL::ResourceKind>(get_constant_metadata(srv, 6)));
 
 		D3DBinding d3d_binding = { stage, resource_kind, index, bind_space, bind_register, range_size };
 		VulkanSRVBinding vulkan_binding = {};
@@ -3243,7 +3243,7 @@ Converter::Impl::get_raw_buffer_meta(DXIL::ResourceType resource_type, unsigned 
 		if (get_constant_metadata(entry, 0) == meta_index)
 		{
 			RawBufferMeta meta = {};
-			meta.kind = DXIL::ResourceKind(get_constant_metadata(entry, 6));
+			meta.kind = DXIL::normalize_resource_kind(DXIL::ResourceKind(get_constant_metadata(entry, 6)));
 
 			unsigned tag_index = resource_type == DXIL::ResourceType::SRV ? 8 : 10;
 
