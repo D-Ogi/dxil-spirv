@@ -4917,6 +4917,12 @@ bool Converter::Impl::emit_stage_output_variables()
 			// Shading rate is also ignored in DS. RE4 hits this case. Just treat it as a normal user varying.
 			system_value = DXIL::Semantic::User;
 		}
+		else if (system_value == DXIL::Semantic::IsFrontFace)
+		{
+			// A geometry shader can write SV_IsFrontFace. In Vulkan, FrontFacing is a bool Fragment input only,
+			// and the fragment shader gets the value from the rasterizer. Treat the output as a user varying.
+			system_value = DXIL::Semantic::User;
+		}
 
 		// Location offsets travel as ordinary varyings until the rasterizer.
 		// Vulkan does not permit Layer/ViewportIndex inputs on GS/HS/DS.
