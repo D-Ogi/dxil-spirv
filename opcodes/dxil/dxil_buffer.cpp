@@ -1526,6 +1526,16 @@ bool emit_raw_buffer_load_instruction(Converter::Impl &impl, const llvm::CallIns
 	}
 	else
 	{
+		// The status of a load from a root descriptor is not defined in D3D12, and the physical load gives no
+		// residency code. Refuse it as emit_buffer_load_instruction() does, instead of an invalid module that
+		// reads the status from the loaded vector.
+		uint32_t access_mask = impl.llvm_composite_meta[instruction].access_mask;
+		if ((access_mask & (1u << (is_vector ? 1 : 4))) != 0)
+		{
+			LOGE("Cannot use BDA and sparse feedback. >:(\n");
+			return false;
+		}
+
 		unsigned vecsize;
 
 		if (is_vector)

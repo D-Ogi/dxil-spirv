@@ -1,0 +1,5 @@
+[ERROR]: Cannot use BDA and sparse feedback. >:(
+[ERROR]: Failed DXIL opcode 139.
+[ERROR]: Failed to emit instruction.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.
