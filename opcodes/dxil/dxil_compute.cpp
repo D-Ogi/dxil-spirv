@@ -56,6 +56,24 @@ bool emit_barrier_instruction(Converter::Impl &impl, const llvm::CallInst *instr
 	if (impl.execution_mode_meta.memory_model == spv::MemoryModelGLSL450 && needs_device_scope_uav)
 		memory_scope = spv::ScopeDevice;
 
+	// Vulkan allows Workgroup memory scope only in these execution models (VUID-StandaloneSpirv-None-07321).
+	// HLSL allows DeviceMemoryBarrier() and AllMemoryBarrier() in other stages, for example pixel shaders.
+	// There, the barrier is for UAV memory, so use Device scope.
+	switch (impl.execution_model)
+	{
+	case spv::ExecutionModelGLCompute:
+	case spv::ExecutionModelTessellationControl:
+	case spv::ExecutionModelMeshEXT:
+	case spv::ExecutionModelTaskEXT:
+	case spv::ExecutionModelMeshNV:
+	case spv::ExecutionModelTaskNV:
+		break;
+
+	default:
+		memory_scope = spv::ScopeDevice;
+		break;
+	}
+
 	op->add_id(builder.makeUintConstant(memory_scope));
 
 	// AcquireReleaseMask doesn't care about scope.
