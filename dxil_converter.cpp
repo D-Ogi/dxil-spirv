@@ -377,6 +377,13 @@ spv::Id Converter::Impl::create_ubo_variable(const RawDeclaration &raw_decl, uin
 	auto &builder = spirv_module.get_builder();
 
 	unsigned element_size = raw_width_to_bits(raw_decl.width) * raw_decl.vecsize / 8;
+
+	// DXC can record a CBV with size 0, for example a ConstantBuffer<> that is a member of a struct,
+	// although the shader reads it. OpTypeArray needs a length of at least 1, so use the
+	// largest D3D12 CBV size (4096 rows of 16 bytes) when the size is not known.
+	if (cbv_size == 0)
+		cbv_size = 4096 * 16;
+
 	unsigned array_length = (cbv_size + element_size - 1) / element_size;
 
 	// It seems like we will have to bitcast ourselves away from vec4 here after loading.
