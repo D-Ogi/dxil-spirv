@@ -338,10 +338,33 @@ bool emit_store_primitive_output_instruction(Converter::Impl &impl, const llvm::
 
 bool emit_dispatch_mesh_instruction(Converter::Impl &impl, const llvm::CallInst *instruction)
 {
+	const llvm::Value *payload = instruction->getOperand(4);
+	spv::Id payload_id = impl.get_id_for_value(payload);
+
+	if (!llvm::isa<llvm::GlobalVariable>(payload))
+	{
+		// The payload is an element of a groupshared array, for example DispatchMesh(x, y, z, g_payloads[1]).
+		// OpEmitMeshTasksEXT takes only a TaskPayloadWorkgroupEXT variable, so copy the element into one.
+		// DispatchMesh is called once in uniform control flow, so all invocations copy the same value.
+		spv::Id type_id = impl.get_type_id(payload->getType()->getPointerElementType());
+		spv::Id var_id = impl.create_variable(spv::StorageClassTaskPayloadWorkgroupEXT, type_id);
+
+		auto *load_op = impl.allocate(spv::OpLoad, type_id);
+		load_op->add_id(payload_id);
+		impl.add(load_op);
+
+		auto *store_op = impl.allocate(spv::OpStore);
+		store_op->add_ids({ var_id, load_op->id });
+		impl.add(store_op);
+
+		payload_id = var_id;
+	}
+
 	Operation *op = impl.allocate(spv::OpEmitMeshTasksEXT);
 
-	for (unsigned i = 1; i <= 4; i++)
+	for (unsigned i = 1; i <= 3; i++)
 		op->add_id(impl.get_id_for_value(instruction->getOperand(i)));
+	op->add_id(payload_id);
 
 	impl.add(op);
 	return true;
