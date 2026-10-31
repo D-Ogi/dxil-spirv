@@ -2127,6 +2127,13 @@ bool emit_atomic_cmpxchg_instruction(Converter::Impl &impl, const llvm::CallInst
 	if (meta.non_uniform)
 		builder.addDecoration(counter_ptr_id, spv::DecorationNonUniformEXT);
 
+	if (component_type == DXIL::ComponentType::F32)
+	{
+		// OpAtomicCompareExchange takes integers only, and a float typed UAV has no integer view.
+		LOGE("Cannot use a compare exchange on a float typed UAV.\n");
+		return false;
+	}
+
 	Operation *op =
 	    impl.allocate(spv::OpAtomicCompareExchange, instruction, impl.get_type_id(component_type, 1, 1));
 

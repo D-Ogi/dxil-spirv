@@ -1,0 +1,7 @@
+RWBuffer<float> T : register(u1);
+
+[numthreads(64, 1, 1)]
+void main(uint i : SV_DispatchThreadID)
+{
+	InterlockedCompareStoreFloatBitwise(T[i], 1.0, 2.0);
+}

@@ -1,0 +1,4 @@
+[ERROR]: cmpxchg through a bitcast pointer to non-integer memory is not supported.
+[ERROR]: Failed to emit instruction.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.

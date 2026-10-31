@@ -293,6 +293,15 @@ static DXIL::ComponentType convert_component_to_unsigned(DXIL::ComponentType typ
 	}
 }
 
+static DXIL::ComponentType convert_atomic_component_to_interface(DXIL::ComponentType type)
+{
+	// DXIL atomics use integer values only. On a float typed UAV (R32_FLOAT), InterlockedExchange gives the
+	// float as an integer bit pattern, so the value and the result are bitcasts of the float.
+	if (type == DXIL::ComponentType::F32)
+		return DXIL::ComponentType::U32;
+	return convert_component_to_unsigned(type);
+}
+
 static DXIL::ComponentType normalize_component_type(DXIL::ComponentType type)
 {
 	switch (type)
@@ -6202,7 +6211,7 @@ void Converter::Impl::fixup_load_type_atomic(DXIL::ComponentType component_type,
 	auto output_component_type = component_type;
 	auto input_component_type = component_type;
 
-	output_component_type = convert_component_to_unsigned(output_component_type);
+	output_component_type = convert_atomic_component_to_interface(output_component_type);
 
 	if (output_component_type != input_component_type)
 	{
@@ -6313,7 +6322,7 @@ spv::Id Converter::Impl::fixup_store_type_atomic(DXIL::ComponentType component_t
 	auto output_component_type = component_type;
 	auto input_component_type = component_type;
 
-	input_component_type = convert_component_to_unsigned(input_component_type);
+	input_component_type = convert_atomic_component_to_interface(input_component_type);
 
 	if (output_component_type != input_component_type)
 		value = build_value_cast(value, input_component_type, output_component_type, components);

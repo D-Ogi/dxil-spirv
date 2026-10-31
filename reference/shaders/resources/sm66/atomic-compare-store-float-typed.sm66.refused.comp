@@ -1,0 +1,5 @@
+[ERROR]: Cannot use a compare exchange on a float typed UAV.
+[ERROR]: Failed DXIL opcode 79.
+[ERROR]: Failed to emit instruction.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.

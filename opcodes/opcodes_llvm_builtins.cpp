@@ -2356,6 +2356,16 @@ bool emit_cmpxchg_instruction(Converter::Impl &impl, const llvm::AtomicCmpXchgIn
 	if (bits == 64)
 		builder.addCapability(spv::CapabilityInt64Atomics);
 
+	// OpAtomicCompareExchange takes integers only. A bitcast pointer to float memory
+	// (InterlockedCompareExchangeFloatBitwise on groupshared float) would need an integer view of that memory.
+	spv::Id remapped_type_id = resolve_llvm_actual_value_type(impl, nullptr, instruction->getPointerOperand(), 0);
+	if (remapped_type_id != 0 && remapped_type_id != builder.makeUintType(bits) &&
+	    remapped_type_id != builder.makeIntType(bits))
+	{
+		LOGE("cmpxchg through a bitcast pointer to non-integer memory is not supported.\n");
+		return false;
+	}
+
 	Operation *atomic_op = impl.allocate(spv::OpAtomicCompareExchange, builder.makeUintType(bits));
 	if (needs_group_shared_auto_barrier(impl, instruction->getPointerOperand()))
 		atomic_op->flags |= Operation::AutoGroupSharedBarrier;
@@ -2449,7 +2459,35 @@ bool emit_atomicrmw_instruction(Converter::Impl &impl, const llvm::AtomicRMWInst
 	if (bits == 64)
 		builder.addCapability(spv::CapabilityInt64Atomics);
 
-	Operation *op = impl.allocate(opcode, instruction);
+	// The pointer can be a bitcast of a pointer to another type of the same size, for example
+	// InterlockedExchange on groupshared float: atomicrmw xchg on (i32 *)bitcast(float *).
+	// We do not implement pointer bitcasts, so the atomic uses the type of the memory,
+	// and the value and the result are bitcasts.
+	spv::Id value_type_id = impl.get_type_id(instruction->getType());
+	spv::Id remapped_type_id = resolve_llvm_actual_value_type(impl, nullptr, instruction->getPointerOperand(), 0);
+	if (remapped_type_id == value_type_id)
+		remapped_type_id = 0;
+
+	if (remapped_type_id != 0 && opcode != spv::OpAtomicExchange)
+	{
+		LOGE("atomicrmw through a bitcast pointer is only supported for exchange.\n");
+		return false;
+	}
+
+	spv::Id cast_value_id = 0;
+	Operation *op;
+
+	if (remapped_type_id != 0)
+	{
+		auto *cast_op = impl.allocate(spv::OpBitcast, remapped_type_id);
+		cast_op->add_id(impl.get_id_for_value(instruction->getValOperand()));
+		impl.add(cast_op);
+		cast_value_id = cast_op->id;
+		op = impl.allocate(opcode, remapped_type_id);
+	}
+	else
+		op = impl.allocate(opcode, instruction);
+
 	if (needs_group_shared_auto_barrier(impl, instruction->getPointerOperand()))
 		op->flags |= Operation::AutoGroupSharedBarrier;
 
@@ -2457,9 +2495,17 @@ bool emit_atomicrmw_instruction(Converter::Impl &impl, const llvm::AtomicRMWInst
 
 	op->add_id(builder.makeUintConstant(spv::ScopeWorkgroup));
 	op->add_id(builder.makeUintConstant(0));
-	op->add_id(impl.get_id_for_value(instruction->getValOperand()));
+	op->add_id(cast_value_id ? cast_value_id : impl.get_id_for_value(instruction->getValOperand()));
 
 	impl.add(op);
+
+	if (remapped_type_id != 0)
+	{
+		auto *cast_op = impl.allocate(spv::OpBitcast, instruction);
+		cast_op->add_id(op->id);
+		impl.add(cast_op);
+	}
+
 	return true;
 }
 
