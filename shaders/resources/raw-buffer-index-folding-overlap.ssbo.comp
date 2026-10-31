@@ -1,0 +1,29 @@
+StructuredBuffer<uint> A : register(t0);
+RWStructuredBuffer<uint> O[] : register(u0);
+
+[numthreads(64, 1, 1)]
+void main(uint i : SV_DispatchThreadID)
+{
+	// The cases of upstream address-folding-edge-cases.comp.
+	O[0][i] = A[63 - i];
+	O[1][i] = A[i - 63];
+	O[2][i] = A[i | 2];
+	O[3][i] = A[(2 * i) | 2];
+	O[4][i] = A[(4 * i) | 2];
+	O[5][i] = A[i ^ 32];
+	O[6][i] = A[(32 * i) ^ 32];
+	O[7][i] = A[(64 * i) ^ 32];
+	O[8][i] = A[(48 * i) ^ 4];
+	O[9][i] = A[(i << 5) ^ 32];
+	O[10][i] = A[(i << 6) ^ 32];
+
+	// Should not be folded. The constant has no bit in common with the scale and is not larger than it,
+	// but bits of the constant can be set in i * scale: (2 * 10) | 4 is 20, not 24.
+	O[11][i] = A[(i * 10) | 4];
+	O[12][i] = A[(i * 10) ^ 5];
+	O[13][i] = A[(i * 18) | 4];
+
+	// Should be folded. The constant is less than the lowest set bit of the scale.
+	O[14][i] = A[(i * 10) | 1];
+	O[15][i] = A[(i * 24) ^ 7];
+}
