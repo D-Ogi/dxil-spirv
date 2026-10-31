@@ -45,7 +45,7 @@ namespace dxil_spv
 {
 struct DXILDispatcher
 {
-#define OP(x) builder_lut[unsigned(DXIL::Op::x)]
+#define OP(x) builder_lut[DXIL::op_lut_index(uint32_t(DXIL::Op::x))]
 	DXILDispatcher() noexcept
 	{
 		// Work around lack of designated initializers in C++.
@@ -453,7 +453,7 @@ struct DXILDispatcher
 
 #undef OP
 
-	DXILOperationBuilder builder_lut[unsigned(DXIL::Op::Count)] = {};
+	DXILOperationBuilder builder_lut[DXIL::OpLutSize] = {};
 };
 
 // Sets up LUT once.
@@ -466,19 +466,21 @@ bool emit_dxil_instruction(Converter::Impl &impl, const llvm::CallInst *instruct
 	if (!get_constant_operand(instruction, 0, &opcode))
 		return false;
 
-	if (opcode >= unsigned(DXIL::Op::Count))
+	// The table index is not the opcode for the internal opcodes, see DXIL::op_lut_index().
+	int lut_index = DXIL::op_lut_index(opcode);
+	if (lut_index < 0)
 	{
 		LOGE("DXIL opcode %u is out of range.\n", opcode);
 		return false;
 	}
 
-	if (global_dispatcher.builder_lut[opcode] == nullptr)
+	if (global_dispatcher.builder_lut[lut_index] == nullptr)
 	{
 		LOGE("Unimplemented DXIL opcode %u\n", opcode);
 		return false;
 	}
 
-	if (!global_dispatcher.builder_lut[opcode](impl, instruction))
+	if (!global_dispatcher.builder_lut[lut_index](impl, instruction))
 	{
 		LOGE("Failed DXIL opcode %u.\n", opcode);
 		return false;

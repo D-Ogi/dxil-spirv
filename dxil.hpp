@@ -545,8 +545,16 @@ enum class Op : unsigned
 	VectorReduceOr = 310,
 	FDot = 311,
 
-	// Internal extensions for where there is impedance mismatch
-	ExtendedDeriv,
+	// The first DXIL opcode that the converter does not know. SM 6.10 assigns 312-344
+	// (GetGroupWaveIndex to IsDebuggingEnabled). These opcodes are refused until they are implemented.
+	DxilOpCount,
+
+	// Internal extensions for where there is impedance mismatch.
+	// Only the DXBC front-end emits these opcodes. They must not be in the range of real DXIL opcodes,
+	// because new shader models add DXIL opcodes after the last one, and DXC uses 0x80000000 and up for
+	// experimental operations.
+	ExtendedBase = 0x40000000,
+	ExtendedDeriv = ExtendedBase,
 	ExtendedCalculateLOD,
 	ExtendedGetDimensions,
 	ExtendedFClamp,
@@ -569,9 +577,24 @@ enum class Op : unsigned
 	ExtendedSpirvLoadInput,
 	ExtendedSpirvControlPointCountIn,
 	ExtendedPow,
+	ExtendedEnd,
 
-	Count
+	// Not an opcode. Used as a "no opcode" value.
+	Count = ExtendedEnd
 };
+
+// Tables that are indexed by opcode keep the DXIL opcodes first, then the internal opcodes.
+constexpr unsigned OpLutSize = unsigned(Op::DxilOpCount) + (unsigned(Op::ExtendedEnd) - unsigned(Op::ExtendedBase));
+
+// Gives the table index of an opcode, or -1 if the opcode is not a known DXIL or internal opcode.
+static inline int op_lut_index(uint32_t opcode)
+{
+	if (opcode < uint32_t(Op::DxilOpCount))
+		return int(opcode);
+	if (opcode >= uint32_t(Op::ExtendedBase) && opcode < uint32_t(Op::ExtendedEnd))
+		return int(unsigned(Op::DxilOpCount) + (opcode - uint32_t(Op::ExtendedBase)));
+	return -1;
+}
 
 enum class AtomicBinOp : uint8_t
 {

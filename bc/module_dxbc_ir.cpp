@@ -480,7 +480,7 @@ struct DXILIntrinsicTable
 		unsigned num_overloads;
 	};
 
-	FunctionEntry intrinsic_functions[int(DXIL::Op::Count)] = {};
+	FunctionEntry intrinsic_functions[DXIL::OpLutSize] = {};
 
 	Function *get(Module &module, DXIL::Op op,
 	              Type *return_type,
@@ -493,7 +493,9 @@ Function *DXILIntrinsicTable::get(
 	Type *return_type, const Vector<Type *> &argument_types,
 	Type *overload_type, uint64_t &tween)
 {
-	auto &entry = intrinsic_functions[int(op)];
+	int lut_index = DXIL::op_lut_index(uint32_t(op));
+	assert(lut_index >= 0);
+	auto &entry = intrinsic_functions[lut_index];
 
 	for (unsigned i = 0; i < entry.num_overloads; i++)
 		if (entry.overloads[i].overload_type == overload_type)

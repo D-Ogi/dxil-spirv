@@ -1,0 +1,4 @@
+[ERROR]: DXIL opcode 334 is out of range.
+[ERROR]: Failed to emit instruction.
+[ERROR]: Failed to convert function.
+[ERROR]: Failed to convert DXIL to SPIR-V.

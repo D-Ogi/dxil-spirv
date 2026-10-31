@@ -289,7 +289,16 @@ def cross_compile_dxil(shader, args, paths, is_asm):
     if '.sf-fp16-conv.' in shader:
         hlsl_cmd += ['--shader-quirk', '17']
 
-    subprocess.check_call(hlsl_cmd)
+    if '.refused.' in shader:
+        # The converter must refuse this input. The reference holds the error lines of the converter.
+        result = subprocess.run(hlsl_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if result.returncode == 0:
+            raise RuntimeError('Converter accepted an input that it must refuse')
+        lines = [l for l in result.stdout.decode('utf-8', 'replace').splitlines() if l.startswith('[ERROR]')]
+        with open(glsl_path, 'w') as f:
+            f.write('\n'.join(lines) + '\n')
+    else:
+        subprocess.check_call(hlsl_cmd)
     if is_asm:
         return glsl_path
     else:
